@@ -16,7 +16,8 @@ from PyQt5.QtWidgets import QMainWindow, QMessageBox
 import json
 import pyqtgraph as pg
 import numpy as np
-import copy, traceback
+import copy
+import traceback
 
 # Custom module imports
 from src_resonator.resonators import Resonator
@@ -258,7 +259,9 @@ class MainWindow(QMainWindow, PropertiesHandler):
         # Projects-Ordner in Fenstertitel anzeigen
         self.setWindowTitle(f"GRay-CAD 2 - Projects: {self.action_handler.projects_dir}")
         
-        self._previous_setup_index = 0  # Initial ist Setup 0 aktiv
+        self._previous_setup_index = 0  # existiert schon – sicherstellen, dass gesetzt
+        self._preview_index = None
+        self._preview_active = False
     
     def update_live_plot_delayed_original(self):
         """Original-Implementation für Live-Plot-Updates"""
@@ -326,93 +329,65 @@ class MainWindow(QMainWindow, PropertiesHandler):
             self.ui.comboBoxSetup.setItemText(idx, new_name)
 
     def save_current_setup(self, target_index=None):
-        """Speichert die aktuelle setupList in das angegebene Setup (nicht während Preview)."""
-        if getattr(self, '_preview_active', False):
-            return  # Preview nicht persistieren
-        
+        """Speichert die aktuelle setupList in das angegebene Setup (Preview nie persistieren)."""
         if target_index is None:
             target_index = self.ui.comboBoxSetup.currentIndex()
-        
+
+        # Nicht speichern, wenn Preview-Setup
+        if self._preview_index is not None and target_index == self._preview_index:
+            return
+
         if target_index < 0 or target_index >= len(self.setups):
             return
-            
         if self.setupList.count() == 0:
             return
-            
+
         current_setup = []
         for i in range(self.setupList.count()):
             item = self.setupList.item(i)
             comp = item.data(QtCore.Qt.UserRole)
             if comp:
                 current_setup.append(copy.deepcopy(comp))
-    
         self.setups[target_index]["components"] = current_setup
 
     def on_setup_selection_changed(self, index):
-        """Wechselt zwischen Setups mit vollständiger Isolation (bricht Preview ab)."""
-        # Beende ggf. Preview vor Wechsel
-        if getattr(self, '_preview_active', False):
-            self.cancel_temporary_setup()
-        
+        """Wechselt zwischen Setups. Preview wird verworfen (nicht gespeichert)."""
         if index < 0 or index >= len(self.setups):
             return
-    
-        self._switching_setups = True
-    
-        try:
-            # Speichere das VORHERIGE Setup (falls vorhanden)
-            previous_index = getattr(self, '_previous_setup_index', None)
-            if previous_index is not None and previous_index != index:
-                self.save_current_setup(previous_index)
-        
-            self._previous_setup_index = index
-        
-            # Trenne alle Signal-Verbindungen UND leere Property-Panel
-            if hasattr(self, '_property_fields'):
-                for field in self._property_fields.values():
-                    if hasattr(field, 'blockSignals'):
-                        field.blockSignals(True)
-                
-                    if hasattr(field, 'textChanged'):
-                        try:
-                            field.textChanged.disconnect()
-                        except TypeError:
-                            pass
-                    if hasattr(field, 'stateChanged'):
-                        try:
-                            field.stateChanged.disconnect()
-                        except TypeError:
-                            pass
-                    if hasattr(field, 'currentIndexChanged'):
-                        try:
-                            field.currentIndexChanged.disconnect()
-                        except TypeError:
-                            pass
-            
-                self._property_fields.clear()
-        
-            # Leere das Property-Panel komplett
-            if hasattr(self, 'propertyLayout'):
-                while self.propertyLayout.count():
-                    child = self.propertyLayout.takeAt(0)
-                    if child.widget():
-                        child.widget().deleteLater()
-        
-            self._last_component_item = None
-            self.setupList.clear()
-        
-            # Lade das neue Setup
-            setup = self.setups[index]["components"]
-            for comp in setup:
-                item = QtWidgets.QListWidgetItem(comp.get("name", "Unnamed"))
-                item.setData(QtCore.Qt.UserRole, copy.deepcopy(comp))
-                self.setupList.addItem(item)
-        
-            self.update_live_plot()
-            self.scale_visible_setup()
-    
-        finally:
-            self._switching_setups = False
+
+        # Wenn wir von einem normalen Setup weggehen (nicht Preview), vorher speichern
+        if (hasattr(self, '_previous_setup_index') and
+            self._previous_setup_index is not None and
+            self._previous_setup_index != index and
+            (self._preview_index is None or self._previous_setup_index != self._preview_index)):
+            self.save_current_setup(self._previous_setup_index)
+
+        # Wenn wir Preview verlassen -> Flag zurücksetzen (kein Restore nötig,
+        # da Preview eigenes Setup ist)
+        if self._preview_index is not None and index != self._preview_index:
+            self._preview_active = False
+
+        self._previous_setup_index = index
+
+        # Property-Panel leeren
+        if hasattr(self, '_property_fields'):
+            self._property_fields.clear()
+        if hasattr(self, 'propertyLayout'):
+            while self.propertyLayout.count():
+                child = self.propertyLayout.takeAt(0)
+                if child.widget():
+                    child.widget().deleteLater()
+
+        # SetupList neu befüllen
+        self.setupList.clear()
+        for comp in self.setups[index]["components"]:
+            item = QtWidgets.QListWidgetItem(comp.get("name", "Unnamed"))
+            item.setData(QtCore.Qt.UserRole, copy.deepcopy(comp))
+            self.setupList.addItem(item)
+
+        self._last_component_item = None
+        self.update_live_plot()
+        self.scale_visible_setup()
 
     def delete_setup(self):
         idx = self.ui.comboBoxSetup.currentIndex()
@@ -576,7 +551,7 @@ class MainWindow(QMainWindow, PropertiesHandler):
                         props["Focal length tangential"] = f_design_calculated
                         if is_round:  # Nur bei sphärischer Linse beide Werte aktualisieren
                             props["Focal length sagittal"] = f_design_calculated
-                    
+                        
                     # Aktualisiere die Komponente in der Liste
                     component["properties"] = props
                     item.setData(QtCore.Qt.UserRole, component)
@@ -613,7 +588,7 @@ class MainWindow(QMainWindow, PropertiesHandler):
                         props["Radius of curvature tangential"] = r_in_calculated
                         if is_round:  # Nur bei sphärischer Linse beide Werte aktualisieren
                             props["Radius of curvature sagittal"] = r_in_calculated
-                    
+                        
                     # Aktualisiere die Komponente in der Liste
                     component["properties"] = props
                     item.setData(QtCore.Qt.UserRole, component)
@@ -883,3 +858,53 @@ class MainWindow(QMainWindow, PropertiesHandler):
                 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error receiving optimized system: {str(e)}")
+
+    def cancel_temporary_setup(self):
+        """Verlässt das Preview-Setup (falls aktiv) und kehrt zum vorherigen Setup zurück."""
+        if not self._preview_active:
+            return
+        self._preview_active = False
+        if (self._previous_setup_index is not None and
+            0 <= self._previous_setup_index < len(self.setups) and
+            self._previous_setup_index != self._preview_index):
+            self.ui.comboBoxSetup.setCurrentIndex(self._previous_setup_index)
+
+    def receive_preview_setup(self, preview_components):
+        """
+        Erstellt/aktualisiert ein spezielles Setup 'Preview'.
+        - Wird bei jeder neuen Vorschau überschrieben.
+        - Wird nie gespeichert.
+        - Andere Setups bleiben unverändert.
+        """
+        if not preview_components:
+            return
+
+        # Prüfe ob Preview-Setup existiert
+        if self._preview_index is None or self._preview_index >= len(self.setups) or self.setups[self._preview_index]["name"] != "Preview":
+            # Anlegen falls nicht vorhanden
+            self.setups.append({"name": "Preview", "components": []})
+            self._preview_index = len(self.setups) - 1
+            # ComboBox aktualisieren ohne andere Namen zu verlieren
+            self.update_setup_names_and_combobox()
+
+        # Komponenten (deep copy) ins Preview-Setup schreiben
+        self.setups[self._preview_index]["components"] = [copy.deepcopy(c) for c in preview_components]
+
+        # Preview-Flag setzen
+        self._preview_active = True
+
+        current_index = self.ui.comboBoxSetup.currentIndex()
+
+        # Falls wir nicht schon im Preview sind: vorheriges echtes Setup speichern
+        if current_index != self._preview_index:
+            if (self._preview_index is None or current_index != self._preview_index):
+                # Speichere nur, wenn echtes Setup
+                self.save_current_setup(current_index)
+            self._previous_setup_index = current_index
+            # Auf Preview umschalten
+            self.ui.comboBoxSetup.setCurrentIndex(self._preview_index)
+            return  # on_setup_selection_changed übernimmt das Laden & Plotten
+
+        # Wenn wir schon im Preview sind: Liste direkt aktualisieren
+        self.load_setup_into_list(self.setups[self._preview_index]["components"])
+        self.update_live_plot()

@@ -1,6 +1,7 @@
 import numpy as np
 from deap import base, creator, tools, algorithms
 from scipy.optimize import minimize
+from src_physics.beam import Beam
 import random
 import json
 import config
@@ -188,7 +189,6 @@ class LensSystemOptimizer:
         Überträgt das Setup an das Hauptfenster über globale Widget-Suche.
         """
         try:
-            from PyQt5.QtWidgets import QApplication
             app = QApplication.instance()
             if app:
                 for widget in app.allWidgets():
@@ -200,6 +200,21 @@ class LensSystemOptimizer:
         except Exception as e:
             raise Exception(f"Failed to transfer setup: {e}")
         
+    def _transfer_preview_setup_to_mainwindow(self, setup_components):
+        """
+        Sendet ein temporäres Setup (Preview) an das Hauptfenster ohne es zu speichern.
+        """
+        try:
+            app = QApplication.instance()
+            if app:
+                for widget in app.allWidgets():
+                    if hasattr(widget, 'receive_preview_setup') and hasattr(widget, 'setupList'):
+                        widget.receive_preview_setup(setup_components)
+                        return
+            raise Exception("Could not find MainWindow instance for preview transfer")
+        except Exception as e:
+            QMessageBox.critical(None, "Preview Error", f"Failed to transfer preview setup: {e}")
+
     def plot_setup(self):
         """
         Erstellt eine Komponentenliste für das aktuelle Linsensystem und sendet sie an das Hauptfenster.
@@ -392,7 +407,6 @@ class LensSystemOptimizer:
     def calculate_beam_parameters(self, individual):
         """Berechne die resultierenden Strahlparameter für ein gegebenes Linsensystem"""
         # Beam-Objekt erstellen
-        from src_physics.beam import Beam
         beam = Beam()
         
         # Initialisiere mit den Eingangsparametern
@@ -744,10 +758,10 @@ class LensSystemOptimizer:
     def _preview_result(self, result):
         """
         Erzeugt ein temporäres Setup für das angeklickte Optimierungsergebnis
-        und sendet es an das Hauptfenster (ersetzt vorherige Vorschau).
+        (Preview) und sendet es an das Hauptfenster. Persistente Setups werden
+        nicht verändert.
         """
         try:
-            # Sicherstellen, dass Beam-Parameter vorhanden sind
             if not hasattr(self, 'wavelength'):
                 self.get_beam_parameters()
 
@@ -759,7 +773,6 @@ class LensSystemOptimizer:
 
             setup_components = []
 
-            # Beam
             setup_components.append({
                 "type": "BEAM",
                 "name": "Beam",
@@ -804,9 +817,9 @@ class LensSystemOptimizer:
                     }
                 })
 
-            # Transfer an MainWindow
-            self._transfer_setup_to_mainwindow(setup_components)
-            self._current_preview_result = result  # Merken falls später übernehmen möchte
+            # NEU: Preview-Transfer (nicht persistent)
+            self._transfer_preview_setup_to_mainwindow(setup_components)
+            self._current_preview_result = result
         except Exception as e:
             QMessageBox.critical(None, "Preview Error", f"Failed to preview setup: {str(e)}")
 
