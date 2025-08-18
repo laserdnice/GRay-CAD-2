@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QApplication
 from PyQt5 import uic
 from os import path
 from src_modematcher.lens_system_optimizier import LensSystemOptimizer
@@ -13,11 +13,32 @@ class ModematcherCalculationWindow(QMainWindow):
 
     def closeEvent(self, event):
         """
-        Called when the window is about to be closed (X button).
+        X-Button: Preview-Setup entfernen und vorheriges Fenster zeigen (wie handle_back_button).
         """
-        event.ignore()  # Prevent default closing
-        if self.item_selector:
-            self.item_selector.handle_back_button()
+        try:
+            # Preview im MainWindow entfernen (falls aktiv)
+            app = QApplication.instance()
+            if app:
+                for w in app.allWidgets():
+                    if hasattr(w, 'remove_preview_setup'):
+                        try:
+                            w.remove_preview_setup()
+                        except Exception:
+                            pass
+                        break
+
+            # Vorheriges Fenster anzeigen
+            if self.previous_window:
+                self.previous_window.show()
+                self.previous_window.raise_()
+                self.previous_window.activateWindow()
+            elif hasattr(self.parent(), 'open_modematcher_parameter_window'):
+                try:
+                    self.parent().open_modematcher_parameter_window()
+                except Exception:
+                    pass
+        finally:
+            event.accept()
 
 class ModematcherCalculator:
     def __init__(self, modematcher):
@@ -44,34 +65,46 @@ class ModematcherCalculator:
 
     def open_modematcher_calculator_window(self):
         """UI-Integration"""
-        self.modematcher_calculation_window = QMainWindow()
-        # Load the modematcher UI
+        # Verwende die spezialisierte Window-Klasse, damit closeEvent greift
+        self.modematcher_calculation_window = ModematcherCalculationWindow()
+        self.modematcher_calculation_window.previous_window = self.previous_window
+
         self.ui_modematcher_calculation = uic.loadUi(
-            path.abspath(path.join(path.dirname(path.dirname(__file__)), 
-            "assets/modematcher_calculation_window.ui")), 
+            path.abspath(path.join(path.dirname(path.dirname(__file__)),
+                                   "assets/modematcher_calculation_window.ui")),
             self.modematcher_calculation_window
         )
-        
-        # Configure and show the window
+
         self.modematcher_calculation_window.setWindowTitle("Mode Matching")
         self.modematcher_calculation_window.show()
-        
+
         # Button-Verbindungen
         self.ui_modematcher_calculation.button_optimize.clicked.connect(self.run_optimization)
         self.ui_modematcher_calculation.button_stop_optimization.clicked.connect(self.stop_optimization)
-        # NEU: Back-Button verbinden
         self.ui_modematcher_calculation.button_back.clicked.connect(self.handle_back_button)
-    
-        
-        # Optional: Lens-Selection Button falls vorhanden
+
         if hasattr(self.ui_modematcher_calculation, 'button_select_lenses'):
             self.ui_modematcher_calculation.button_select_lenses.clicked.connect(self.open_lens_selection)
+        if hasattr(self.ui_modematcher_calculation, 'button_create_setup'):
+            self.ui_modematcher_calculation.button_create_setup.clicked.connect(self.create_selected_setups)
     
     def handle_back_button(self):
         """
-        Schließt das aktuelle Fenster und zeigt das vorherige (Parameter-Fenster) an
+        Schließt das aktuelle Fenster und zeigt das vorherige (Parameter-Fenster) an.
+        Entfernt dabei das Preview-Setup aus dem Hauptfenster (falls vorhanden).
         """
         try:
+            # Preview im MainWindow entfernen (falls aktiv)
+            app = QApplication.instance()
+            if app:
+                for w in app.allWidgets():
+                    if hasattr(w, 'remove_preview_setup'):
+                        try:
+                            w.remove_preview_setup()
+                        except Exception:
+                            pass
+                        break
+
             # Aktuelles Fenster schließen
             if hasattr(self, 'modematcher_calculation_window') and self.modematcher_calculation_window:
                 self.modematcher_calculation_window.close()
@@ -81,16 +114,14 @@ class ModematcherCalculator:
             # Vorheriges Fenster anzeigen
             if hasattr(self, 'previous_window') and self.previous_window:
                 self.previous_window.show()
-                self.previous_window.raise_()  # Fenster in den Vordergrund bringen
-                self.previous_window.activateWindow()  # Fenster aktivieren
+                self.previous_window.raise_()
+                self.previous_window.activateWindow()
             else:
-                # Fallback: Erstelle neues Parameter-Fenster
                 if hasattr(self.modematcher, 'open_modematcher_parameter_window'):
                     self.modematcher.open_modematcher_parameter_window()
                     
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error in handle_back_button: {e}")
-            # Fallback: Versuche Parameter-Fenster zu öffnen
             try:
                 if hasattr(self.modematcher, 'open_modematcher_parameter_window'):
                     self.modematcher.open_modematcher_parameter_window()
@@ -162,4 +193,11 @@ class ModematcherCalculator:
         except Exception as e:
             QMessageBox.critical(self, "Error", "Error during optimization: " + str(e))
             return None
+    
+    def create_selected_setups(self):
+        """Delegate an Optimizer: persist selected optimization results as setups."""
+        try:
+            self.optimizer.create_selected_setups()
+        except Exception as e:
+            QMessageBox.critical(self.modematcher_calculation_window, "Error", f"Error creating setups: {e}")
 

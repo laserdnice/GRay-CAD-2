@@ -5,7 +5,7 @@ from src_physics.beam import Beam
 import random
 import json
 import config
-from PyQt5.QtWidgets import QMessageBox, QProgressDialog, QApplication, QTableWidgetItem
+from PyQt5.QtWidgets import QMessageBox, QProgressDialog, QApplication, QTableWidgetItem, QCheckBox
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, Qt
 from src_physics.value_converter import ValueConverter
 
@@ -184,18 +184,22 @@ class LensSystemOptimizer:
         except Exception as e:
             QMessageBox.critical(None, "Error", f"Error loading lens library: {str(e)}")
 
-    def _transfer_setup_to_mainwindow(self, setup_components):
+    def _transfer_setup_to_mainwindow(self, setup_components, setup_name=None):
         """
-        Überträgt das Setup an das Hauptfenster über globale Widget-Suche.
+        Überträgt ein (persistentes) Setup an das Hauptfenster.
+        Optional mit explizitem Namen (falls MainWindow diese Variante unterstützt).
         """
         try:
             app = QApplication.instance()
             if app:
                 for widget in app.allWidgets():
+                    # Variante mit Namen bevorzugen, wenn vorhanden
+                    if setup_name and hasattr(widget, 'receive_setup_with_name') and hasattr(widget, 'setupList'):
+                        widget.receive_setup_with_name(setup_components, setup_name)
+                        return
                     if hasattr(widget, 'receive_setup') and hasattr(widget, 'setupList'):
                         widget.receive_setup(setup_components)
                         return
-            # Falls keine Methode funktioniert
             raise Exception("Could not find MainWindow instance to transfer setup")
         except Exception as e:
             raise Exception(f"Failed to transfer setup: {e}")
@@ -680,12 +684,12 @@ class LensSystemOptimizer:
                 table.clearSelection()
                 table.setSortingEnabled(False)  # Temporär aus beim Füllen
                 table.setRowCount(len(results))
-                table.setColumnCount(6)
+                table.setColumnCount(7)
 
                 def fmt(v): 
                     return self.vc.convert_to_nearest_string(v)
 
-                RESULT_ROLE = Qt.UserRole + 99  # eigener Role-Key
+                RESULT_ROLE = Qt.UserRole + 99
 
                 for row, result in enumerate(results):
                     waist_sag = result['waist_sag']
@@ -701,7 +705,7 @@ class LensSystemOptimizer:
                     delta_z0_tan = position_tan - z0_tan_goal
 
                     item_fitness = NumericTableWidgetItem(f"{fitness:.3e}", fitness)
-                    item_fitness.setData(RESULT_ROLE, result)  # result an erster Spalte hinterlegen
+                    item_fitness.setData(RESULT_ROLE, result)
                     item_lenses = NumericTableWidgetItem(f"{lens_count}", lens_count)
                     item_waist = NumericTableWidgetItem(f"{fmt(waist_sag)}\n{fmt(waist_tan)}", waist_sag)
                     item_delta_waist = NumericTableWidgetItem(f"{fmt(delta_w0_sag)}\n{fmt(delta_w0_tan)}", abs(delta_w0_sag))
@@ -720,13 +724,42 @@ class LensSystemOptimizer:
                     table.setItem(row, 4, item_position)
                     table.setItem(row, 5, item_delta_position)
 
+                    # Checkbox-Spalte
+                    checkbox_item = QTableWidgetItem("")  # Platzhalter für Sortierung
+                    checkbox_item.setFlags(Qt.ItemIsEnabled)  # Nicht auswählbar/editierbar
+                    table.setItem(row, 6, checkbox_item)
+                    cb = QCheckBox()
+                    cb.stateChanged.connect(
+                        lambda state, chk=cb, res=result: self._on_result_checkbox_changed(state, chk, res)
+                    )
+                    table.setCellWidget(row, 6, cb)
+
                 table.setSortingEnabled(True)
                 table.sortItems(0, Qt.AscendingOrder)
 
-                # Nur einmal verbinden
                 if not getattr(table, "_preview_connected", False):
                     table.itemSelectionChanged.connect(self._on_table_selection_changed)
                     table._preview_connected = True
+
+    def _on_result_checkbox_changed(self, state, checkbox, result):
+        """Verwaltet Auswahl-Liste für angehakte Resultate."""
+        if not hasattr(self, "_selected_results"):
+            self._selected_results = set()
+        if state == Qt.Checked:
+            self._selected_results.add(id(result))
+        else:
+            self._selected_results.discard(id(result))
+
+    def get_selected_results(self):
+        """Gibt die ausgewählten Result-Dicts zurück (basierend auf id-Matching)."""
+        if not hasattr(self, "_selected_results") or not hasattr(self, "last_optimization_results"):
+            return []
+        selected = []
+        selected_ids = self._selected_results
+        for r in self.last_optimization_results:
+            if id(r) in selected_ids:
+                selected.append(r)
+        return selected
 
     def _on_table_selection_changed(self):
         """Handler: Auswahl im Ergebnis-Table -> dazugehöriges Setup temporär plotten."""
@@ -885,3 +918,78 @@ class LensSystemOptimizer:
         except Exception as e:
             # QMessageBox braucht als erstes Argument ein QWidget oder None!
             QMessageBox.critical(None, "Error", "Error stopping optimization: " + str(e))
+
+    def _build_setup_components_from_result(self, result):
+        """
+        Baut eine Komponentenliste (persistentes Setup) aus einem Optimierungsergebnis.
+        """
+        if not hasattr(self, 'wavelength'):
+            self.get_beam_parameters()
+
+        wavelength = self.wavelength
+        waist_sag = self.waist_input_sag
+        waist_tan = self.waist_input_tan
+        waist_pos_sag = self.waist_position_sag
+        waist_pos_tan = self.waist_position_tan
+
+        components = [{
+            "type": "BEAM",
+            "name": "Beam",
+            "properties": {
+                "Wavelength": wavelength,
+                "Waist radius sagittal": waist_sag,
+                "Waist radius tangential": waist_tan,
+                "Waist position sagittal": waist_pos_sag,
+                "Waist position tangential": waist_pos_tan,
+                "Rayleigh range sagittal": np.pi * waist_sag**2 / wavelength,
+                "Rayleigh range tangential": np.pi * waist_tan**2 / wavelength,
+                "IS_ROUND": False
+            }
+        }]
+
+        sorted_lenses = sorted(result.get('lenses', []), key=lambda x: x[1])
+        last_position = 0.0
+
+        for lens, position in sorted_lenses:
+            distance = position - last_position
+            if distance > 0:
+                components.append({
+                    "type": "PROPAGATION",
+                    "name": f"Propagation {last_position:.3f}m to {position:.3f}m",
+                    "properties": {
+                        "Length": distance,
+                        "Refractive index": 1.0
+                    }
+                })
+            components.append(dict(lens))
+            last_position = position
+
+        final_distance = self.distance - last_position
+        if final_distance > 0:
+            components.append({
+                "type": "PROPAGATION",
+                "name": f"Propagation {last_position:.3f}m to {self.distance:.3f}m",
+                "properties": {
+                    "Length": final_distance,
+                    "Refractive index": 1.0
+                }
+            })
+        return components
+
+    def create_selected_setups(self):
+        """
+        Erstellt für alle per Checkbox ausgewählten Ergebnisse persistente Setups im MainWindow.
+        """
+        try:
+            selected = self.get_selected_results()
+            if not selected:
+                QMessageBox.information(None, "Create Setups", "No results selected.")
+                return
+            for idx, res in enumerate(selected, start=1):
+                comps = self._build_setup_components_from_result(res)
+                fit = res.get('fitness', 0.0)
+                name = f"OptResult {idx} (fit {fit:.2e})"
+                self._transfer_setup_to_mainwindow(comps, setup_name=name)
+            QMessageBox.information(None, "Create Setups", f"Created {len(selected)} setup(s).")
+        except Exception as e:
+            QMessageBox.critical(None, "Error", f"Error creating setups: {e}")

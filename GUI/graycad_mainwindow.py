@@ -908,3 +908,57 @@ class MainWindow(QMainWindow, PropertiesHandler):
         # Wenn wir schon im Preview sind: Liste direkt aktualisieren
         self.load_setup_into_list(self.setups[self._preview_index]["components"])
         self.update_live_plot()
+
+    def remove_preview_setup(self):
+        """Entfernt das 'Preview'-Setup vollständig und stellt vorheriges Setup wieder her."""
+        if not hasattr(self, 'setups'):
+            return
+        # Finde Preview-Index (falls Flag nicht gesetzt)
+        if not hasattr(self, '_preview_index') or self._preview_index is None:
+            for i, s in enumerate(self.setups):
+                if s.get("name") == "Preview":
+                    self._preview_index = i
+                    break
+        if self._preview_index is None:
+            return  # Kein Preview vorhanden
+
+        current_index = self.ui.comboBoxSetup.currentIndex()
+        was_preview_selected = (current_index == self._preview_index)
+
+        # Zielindex bestimmen (wohin wechseln nach Entfernen)
+        fallback_index = getattr(self, "_previous_setup_index", None)
+        if fallback_index is None or fallback_index == self._preview_index or not (0 <= fallback_index < len(self.setups)):
+            # Nimm erstes verfügbares echtes Setup
+            fallback_index = 0
+            if self._preview_index == 0 and len(self.setups) > 1:
+                fallback_index = 1
+            if self._preview_index == 0 and len(self.setups) == 1:
+                fallback_index = -1  # danach leer
+
+        # Preview entfernen
+        try:
+            del self.setups[self._preview_index]
+        except Exception:
+            pass
+
+        # Flags zurücksetzen
+        self._preview_index = None
+        self._preview_active = False
+
+        # ComboBox aktualisieren
+        self.update_setup_names_and_combobox()
+
+        # Index-Korrektur falls wir Items entfernt haben
+        if fallback_index >= 0:
+            if fallback_index >= len(self.setups):
+                fallback_index = len(self.setups) - 1
+            if fallback_index >= 0:
+                self.ui.comboBoxSetup.setCurrentIndex(fallback_index)
+                # Liste und Plot aktualisieren
+                if 0 <= fallback_index < len(self.setups):
+                    self.load_setup_into_list(self.setups[fallback_index]["components"])
+                    self.update_live_plot()
+        else:
+            # Alles leer
+            self.setupList.clear()
+            self.update_live_plot()
