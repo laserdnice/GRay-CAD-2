@@ -13,6 +13,9 @@ class Start:
         if not hasattr(creator, "Particle"):
             creator.create("Particle", list, fitness=creator.FitnessMin, 
                          speed=list, smin=None, smax=None, best=None)
+        # Füge Individual-Klasse hinzu
+        if not hasattr(creator, "Individual"):
+            creator.create("Individual", list, fitness=creator.FitnessMin)
 
         self.app = QApplication([])
         self.app.setWindowIcon(QIcon(path.abspath(path.join(path.dirname(__file__), 

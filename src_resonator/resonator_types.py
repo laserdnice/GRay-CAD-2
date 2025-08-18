@@ -77,6 +77,128 @@ class BowTie:
                     ((waist_tan - target_tan) / target_tan)**2
                 )
                 return fitness_value,
+            
+    def _add_bowtie_components(self, setup_components, wavelength, lc, nc):
+        """Fügt BowTie-spezifische Komponenten hinzu"""
+        # Kristall erste Hälfte
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (first half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })
+        
+        # Propagation zu Spiegel 1
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation to Mirror 1",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 1
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 1",
+            "properties": {
+                "Radius of curvature sagittal": self.r1_sag,
+                "Radius of curvature tangential": self.r1_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r1_sag - self.r1_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zu Spiegel 2
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation to Mirror 2", 
+            "properties": {
+                "Length": self.l2,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 2
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 2",
+            "properties": {
+                "Radius of curvature sagittal": self.r2_sag,
+                "Radius of curvature tangential": self.r2_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r2_sag - self.r2_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back",
+            "properties": {
+                "Length": self.l3,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 2 (Rückweg)
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 2 (return)",
+            "properties": {
+                "Radius of curvature sagittal": self.r2_sag,
+                "Radius of curvature tangential": self.r2_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r2_sag - self.r2_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück zu Spiegel 1
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back to Mirror 1",
+            "properties": {
+                "Length": self.l2,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 1 (Rückweg)
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 1 (return)",
+            "properties": {
+                "Radius of curvature sagittal": self.r1_sag,
+                "Radius of curvature tangential": self.r1_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r1_sag - self.r1_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück zum Kristall
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back to crystal",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Kristall zweite Hälfte
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (second half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })
 
 class FabryPerot:
      
@@ -136,6 +258,62 @@ class FabryPerot:
                     ((waist_tan - target_tan) / target_tan)**2
                 )
                 return fitness_value,
+            
+    def _add_fabryperot_components(self, setup_components, wavelength, lc, nc):
+        """Fügt FabryPerot-spezifische Komponenten hinzu"""
+        # Kristall erste Hälfte
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (first half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })
+        
+        # Propagation zu Spiegel
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation to End Mirror",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # End Mirror
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "End Mirror",
+            "properties": {
+                "Radius of curvature sagittal": self.r1_sag,
+                "Radius of curvature tangential": self.r1_tan,
+                "Angle of incidence": 0.0,
+                "IS_ROUND": abs(self.r1_sag - self.r1_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Kristall zweite Hälfte
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (second half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })
             
 class Triangle:
     
@@ -208,6 +386,107 @@ class Triangle:
                     ((waist_tan - target_tan) / target_tan)**2
                 )
                 return fitness_value,
+            
+    def _add_triangle_components(self, setup_components, wavelength, lc, nc):
+        """Fügt Triangle-spezifische Komponenten hinzu"""
+        self.phi = (np.pi/2 - 2*self.theta)
+        self.l2 = (self.l1 + lc/2)/np.cos(2*self.theta)
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (first half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })
+        
+        # Propagation zu Spiegel 1
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation to Mirror 1",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 1
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 1",
+            "properties": {
+                "Radius of curvature sagittal": self.r1_sag,
+                "Radius of curvature tangential": self.r1_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r1_sag - self.r1_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zu Spiegel 2
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation to Mirror 2", 
+            "properties": {
+                "Length": self.l2,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 2
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 2",
+            "properties": {
+                "Radius of curvature sagittal": self.r2_sag,
+                "Radius of curvature tangential": self.r2_tan,
+                "Angle of incidence": self.phi,
+                "IS_ROUND": abs(self.r2_sag - self.r2_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back to Mirror 1",
+            "properties": {
+                "Length": self.l2,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 1 (Rückweg)
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 1 (return)",
+            "properties": {
+                "Radius of curvature sagittal": self.r1_sag,
+                "Radius of curvature tangential": self.r1_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r1_sag - self.r1_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück zum Kristall
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back to crystal",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Kristall zweite Hälfte
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (second half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })
             
 class Rectangle:
     
@@ -283,3 +562,126 @@ class Rectangle:
                     ((waist_tan - target_tan) / target_tan)**2
                 )
                 return fitness_value,
+            
+    def _add_rectangle_components(self, setup_components, wavelength, lc, nc):
+        """Fügt Rectangle-spezifische Komponenten hinzu"""
+        self.l3 = (2 * self.l1) + lc
+        self.theta = np.pi / 4
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (first half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })
+        
+        # Propagation zu Spiegel 1
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation to Mirror 1",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 1
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 1",
+            "properties": {
+                "Radius of curvature sagittal": self.r1_sag,
+                "Radius of curvature tangential": self.r1_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r1_sag - self.r1_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zu Spiegel 2
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation to Mirror 2", 
+            "properties": {
+                "Length": self.l2,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 2
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 2",
+            "properties": {
+                "Radius of curvature sagittal": self.r2_sag,
+                "Radius of curvature tangential": self.r2_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r2_sag - self.r2_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back",
+            "properties": {
+                "Length": self.l3,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 2 (Rückweg)
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 2 (return)",
+            "properties": {
+                "Radius of curvature sagittal": self.r2_sag,
+                "Radius of curvature tangential": self.r2_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r2_sag - self.r2_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück zu Spiegel 1
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back to Mirror 1",
+            "properties": {
+                "Length": self.l2,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Spiegel 1 (Rückweg)
+        setup_components.append({
+            "type": "MIRROR",
+            "name": "Mirror 1 (return)",
+            "properties": {
+                "Radius of curvature sagittal": self.r1_sag,
+                "Radius of curvature tangential": self.r1_tan,
+                "Angle of incidence": self.theta,
+                "IS_ROUND": abs(self.r1_sag - self.r1_tan) < 1e-12
+            }
+        })
+        
+        # Propagation zurück zum Kristall
+        setup_components.append({
+            "type": "PROPAGATION",
+            "name": "Propagation back to crystal",
+            "properties": {
+                "Length": self.l1,
+                "Refractive index": 1.0
+            }
+        })
+        
+        # Kristall zweite Hälfte
+        if lc > 0:
+            setup_components.append({
+                "type": "PROPAGATION",
+                "name": "Crystal (second half)",
+                "properties": {
+                    "Length": lc / 2,
+                    "Refractive index": nc
+                }
+            })

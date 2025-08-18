@@ -1,0 +1,83 @@
+{
+  "name": "from_modematcher",
+  "created": "2025-08-15T09:44:51.035927",
+  "version": "0.1",
+  "type": "GRAYCAD_SETUP",
+  "components": [
+    {
+      "name": "Beam",
+      "properties": {
+        "IS_ROUND": false,
+        "Rayleigh range sagittal": 0.015280119910456186,
+        "Rayleigh range tangential": 0.015280119910456186,
+        "Waist position sagittal": 0.0,
+        "Waist position tangential": 0.0,
+        "Waist radius sagittal": 4.9999999999999996e-05,
+        "Waist radius tangential": 4.9999999999999996e-05,
+        "Wavelength": 5.140000000000001e-07
+      },
+      "type": "BEAM"
+    },
+    {
+      "name": "Propagation 0.000m to 0.182m",
+      "properties": {
+        "Length": 0.18236397430168505,
+        "Refractive index": 1.0
+      },
+      "type": "PROPAGATION"
+    },
+    {
+      "manufacturer": "",
+      "name": "spherical f=150mm",
+      "properties": {
+        "Design wavelength": 5.140000000000001e-07,
+        "Focal length sagittal": 0.15,
+        "Focal length tangential": 0.15,
+        "IS_ROUND": true,
+        "Lens material": "NBK7",
+        "Plan lens": true,
+        "Radius of curvature sagittal": 0.07807815000302205,
+        "Radius of curvature tangential": 0.07807815000302205,
+        "Variable parameter": "Edit focal length"
+      },
+      "type": "LENS"
+    },
+    {
+      "name": "Propagation 0.182m to 0.887m",
+      "properties": {
+        "Length": 0.7048929493330517,
+        "Refractive index": 1.0
+      },
+      "type": "PROPAGATION"
+    },
+    {
+      "manufacturer": "",
+      "name": "spherical f=150mm",
+      "properties": {
+        "Design wavelength": 5.140000000000001e-07,
+        "Focal length sagittal": 0.15,
+        "Focal length tangential": 0.15,
+        "IS_ROUND": true,
+        "Lens material": "NBK7",
+        "Plan lens": true,
+        "Radius of curvature sagittal": 0.07807815000302205,
+        "Radius of curvature tangential": 0.07807815000302205,
+        "Variable parameter": "Edit focal length"
+      },
+      "type": "LENS"
+    },
+    {
+      "name": "Propagation 0.887m to 1.000m",
+      "properties": {
+        "Length": 0.11274307636526326,
+        "Refractive index": 1.0
+      },
+      "type": "PROPAGATION"
+    }
+  ],
+  "metadata": {
+    "component_count": 6,
+    "has_beam": true,
+    "saved_from": "GRay-CAD 2"
+  }
+}

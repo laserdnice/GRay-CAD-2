@@ -10,6 +10,9 @@ from PyQt5.QtGui import QPixmap
 from src_resonator.problem import Problem
 from src_resonator.resonator_types import *
 from src_physics.value_converter import ValueConverter
+from GUI.optical_plotter import OpticalSystemPlotter
+from src_physics.matrices import Matrices
+from src_physics.beam import Beam
 
 class Resonator(QObject):
     """
@@ -25,6 +28,9 @@ class Resonator(QObject):
         self.ui_resonator = None
         self.mirror_curvatures = []
         self.vc = ValueConverter()
+        self.beam = Beam()
+        self.matrices = Matrices()
+        self.plotter = None
 
         # Attributes to store optimization results
         self.l1 = None
@@ -74,7 +80,7 @@ class Resonator(QObject):
         
         self.ui_resonator.button_back.clicked.connect(self.handle_back_button)
         
-        self.ui_resonator.pushButton_generate_setup.clicked.connect(self.emit_setup)
+        self.ui_resonator.pushButton_plot_setup.clicked.connect(self.plot_current_setup)
         
         # Call config_ui explicitly after setting up the UI
         self.config_ui()
@@ -82,14 +88,127 @@ class Resonator(QObject):
         # Show the window after configuration
         self.resonator_window.show()
 
-    def emit_setup(self):
-        # Erzeuge das optische System (als Beispiel, passe ggf. an)
-        optical_system = [
-            (self.parent().matrices.free_space, (0.1, 1)),
-            (self.parent().matrices.lens, 0.01),
-            (self.parent().matrices.free_space, (0.3, 1))
-        ]
-        self.setup_generated.emit(optical_system)
+    def plot_current_setup(self):
+        """
+        Konvertiert das berechnete Resonator-Setup in eine Setup-Liste und sendet es an das Hauptfenster
+        """
+        # Prüfe ob eine Optimierung durchgeführt wurde
+        if not hasattr(self, 'waist_sag') or not hasattr(self, 'l1'):
+            QMessageBox.warning(
+                self.resonator_window,
+                "No Optimization Results",
+                "Please run the resonator optimization first before plotting the setup."
+            )
+            return
+        
+        try:
+            # Hole die gespeicherten Parameter
+            wavelength, lc, nc = config.get_temp_light_field_parameters()
+            
+            # Baue das Setup als Komponenten-Liste auf
+            setup_components = []
+            
+            # 1. Beam-Komponente mit berechneten Waist-Werten
+            beam_component = {
+                "type": "BEAM",
+                "name": "Beam",
+                "properties": {
+                    "Wavelength": wavelength,
+                    "Waist radius sagittal": self.waist_sag,
+                    "Waist radius tangential": self.waist_tan,
+                    "Waist position sagittal": 0.0,
+                    "Waist position tangential": 0.0,
+                    "Rayleigh range sagittal": np.pi * self.waist_sag**2 / wavelength,
+                    "Rayleigh range tangential": np.pi * self.waist_tan**2 / wavelength,
+                    "IS_ROUND": False
+                }
+            }
+            setup_components.append(beam_component)
+            
+            # 2. NEU: Resonator-spezifische Komponenten basierend auf dem Typ
+            if self.selected_class_name == "BowTie":
+                # Erstelle eine BowTie-Instanz und setze die berechneten Werte
+                bowtie = BowTie()
+                bowtie.l1 = self.l1
+                bowtie.l2 = self.l2
+                bowtie.l3 = self.l3
+                bowtie.theta = self.theta
+                bowtie.r1_sag = self.r1_sag
+                bowtie.r1_tan = self.r1_tan
+                bowtie.r2_sag = self.r2_sag
+                bowtie.r2_tan = self.r2_tan
+                bowtie._add_bowtie_components(setup_components, wavelength, lc, nc)
+                
+            elif self.selected_class_name == "FabryPerot":
+                fabry = FabryPerot()
+                fabry.l1 = self.l1
+                fabry.r1_sag = self.r1_sag
+                fabry.r1_tan = self.r1_tan
+                fabry._add_fabryperot_components(setup_components, wavelength, lc, nc)
+                
+            elif self.selected_class_name == "Rectangle":
+                rectangle = Rectangle()
+                rectangle.l1 = self.l1
+                rectangle.l2 = self.l2
+                rectangle.r1_sag = self.r1_sag
+                rectangle.r1_tan = self.r1_tan
+                rectangle.r2_sag = self.r2_sag
+                rectangle.r2_tan = self.r2_tan
+                rectangle._add_rectangle_components(setup_components, wavelength, lc, nc)
+                
+            elif self.selected_class_name == "Triangle":
+                triangle = Triangle()
+                triangle.l1 = self.l1
+                triangle.l2 = self.l2
+                triangle.theta = self.theta
+                triangle.r1_sag = self.r1_sag
+                triangle.r1_tan = self.r1_tan
+                triangle.r2_sag = self.r2_sag
+                triangle.r2_tan = self.r2_tan
+                triangle._add_triangle_components(setup_components, wavelength, lc, nc)
+        
+            # Übertrage das Setup an das Hauptfenster
+            self._transfer_setup_to_mainwindow(setup_components)
+            
+            QMessageBox.information(
+                self.resonator_window,
+                "Setup Generated",
+                f"Generated {self.selected_class_name} resonator setup with {len(setup_components)} components."
+            )
+            
+        except Exception as e:
+            print(f"Error in plot_current_setup: {e}")  # Debug-Ausgabe
+            QMessageBox.critical(
+                self.resonator_window,
+                "Error",
+                f"Error generating setup: {str(e)}"
+            )
+
+    def _transfer_setup_to_mainwindow(self, setup_components):
+        """
+        Überträgt das Setup an das Hauptfenster über verschiedene Methoden
+        """
+        try:
+            # Methode 1: Standard Qt-Signal (falls Parent verfügbar)
+            parent = self.parent()
+            if parent and hasattr(parent, 'receive_setup'):
+                parent.receive_setup(setup_components)
+                return
+            
+            # Methode 2: Globale Widget-Suche (Fallback)
+            from PyQt5.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app:
+                for widget in app.allWidgets():
+                    if hasattr(widget, 'receive_setup') and hasattr(widget, 'setupList'):
+                        widget.receive_setup(setup_components)
+                        return
+            
+            # Falls keine Methode funktioniert
+            raise Exception("Could not find MainWindow instance to transfer setup")
+            
+        except Exception as e:
+            raise Exception(f"Failed to transfer setup: {e}")
 
     def close_resonator_window(self):
         """

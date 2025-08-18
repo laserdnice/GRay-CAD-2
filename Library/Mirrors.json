@@ -122,6 +122,28 @@
                 "IS_ROUND": 1.0,
                 "Angle of incidence": 0.0
             }
+        },
+        {
+            "type": "MIRROR",
+            "name": "spherical r=75mm",
+            "manufacturer": "",
+            "properties": {
+                "Radius of curvature tangential": 0.075,
+                "Radius of curvature sagittal": 0.075,
+                "IS_ROUND": 1.0,
+                "Angle of incidence": 0.0
+            }
+        },
+        {
+            "type": "MIRROR",
+            "name": "cylindrical r=75mm",
+            "manufacturer": "",
+            "properties": {
+                "Radius of curvature tangential": 1e+30,
+                "Radius of curvature sagittal": 0.075,
+                "IS_ROUND": false,
+                "Angle of incidence": 0.0
+            }
         }
     ]
 }

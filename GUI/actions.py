@@ -72,7 +72,7 @@ class Action:
         return False
 
     def _save_to_file(self, parent, file_path):
-        """Speichert das aktuelle Setup in die angegebene Datei."""
+        """Speichert das aktuelle Setup in die angegebene Datei. Rückgabe: bool."""
         try:
             # Sammle alle Komponenten aus der setupList
             components = []
@@ -82,11 +82,10 @@ class Action:
                 if isinstance(component, dict):
                     components.append(copy.deepcopy(component))
 
-            # Erstelle Setup-Datenstruktur
             setup_data = {
                 "name": parent.ui.comboBoxSetup.currentText(),
                 "created": datetime.now().isoformat(),
-                "version": "2.0",
+                "version": "0.1",
                 "type": "GRAYCAD_SETUP",
                 "components": components,
                 "metadata": {
@@ -96,52 +95,58 @@ class Action:
                 }
             }
 
-            # Speichere in JSON-Format
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(setup_data, f, indent=2, ensure_ascii=False)
-
-            QMessageBox.information(
-                parent, 
-                "Success", 
-                f"Setup saved successfully to:\n{file_path}"
-            )
             return True
-
         except Exception as e:
-            QMessageBox.critical(
-                parent, 
-                "Error", 
-                f"Failed to save setup:\n{str(e)}"
-            )
+            QMessageBox.critical(parent, "Error", f"Failed to save setup:\n{str(e)}")
             return False
 
     def _load_from_file(self, parent, file_path):
-        """Lädt ein Setup aus der angegebenen Datei."""
+        """Lädt ein Setup aus Datei und fügt es als neues Setup hinzu (löscht bestehende nicht). Rückgabe: bool."""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 setup_data = json.load(f)
-
-            # Validiere Datenstruktur
             if not isinstance(setup_data, dict) or "components" not in setup_data:
                 raise ValueError("Invalid setup file format")
-
             components = setup_data.get("components", [])
-            setup_name = setup_data.get("name", os.path.basename(file_path))
-
-            # Prüfe ob Beam vorhanden ist
-            has_beam = any(comp.get("name", "").strip().lower() == "beam" for comp in components)
+            base_name = setup_data.get("name", os.path.basename(file_path))
+            has_beam = any(comp.get("type", "").strip().lower() == "beam" for comp in components)
             if not has_beam:
                 reply = QMessageBox.question(
-                    parent,
-                    "No Beam Found",
+                    parent, "No Beam Found",
                     "The loaded setup contains no beam component. Continue anyway?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No
                 )
                 if reply != QMessageBox.Yes:
                     return False
-
-            # Lade Komponenten in setupList
+            if not hasattr(parent, 'setups'):
+                parent.setups = []
+            if hasattr(parent, 'ui') and hasattr(parent.ui, 'comboBoxSetup'):
+                current_index = parent.ui.comboBoxSetup.currentIndex()
+                if 0 <= current_index < len(getattr(parent, 'setups', [])):
+                    current_components = []
+                    for i in range(parent.setupList.count()):
+                        item = parent.setupList.item(i)
+                        comp = item.data(QtCore.Qt.UserRole)
+                        if isinstance(comp, dict):
+                            current_components.append(copy.deepcopy(comp))
+                    try:
+                        parent.setups[current_index]['components'] = current_components
+                    except Exception:
+                        pass
+            existing_names = {s.get("name", "") for s in parent.setups}
+            name = base_name
+            if name in existing_names:
+                k = 2
+                while f"{base_name} ({k})" in existing_names:
+                    k += 1
+                name = f"{base_name} ({k})"
+            new_setup = {"name": name, "components": copy.deepcopy(components)}
+            parent.setups.append(new_setup)
+            if hasattr(parent.ui, 'comboBoxSetup'):
+                parent.ui.comboBoxSetup.addItem(name)
+                parent.ui.comboBoxSetup.setCurrentIndex(parent.ui.comboBoxSetup.count() - 1)
             parent.setupList.clear()
             parent._last_component_item = None
             if hasattr(parent, '_property_fields'):
@@ -150,30 +155,14 @@ class Action:
                 item = QtWidgets.QListWidgetItem(comp.get("name", "Unnamed"))
                 item.setData(QtCore.Qt.UserRole, copy.deepcopy(comp))
                 parent.setupList.addItem(item)
-
-            # Aktualisiere Setup-Name
-            parent.ui.comboBoxSetup.setCurrentText(setup_name)
-
-            # Setze aktuellen Dateipfad
+            parent.update_live_plot()
+            if hasattr(parent, 'scale_visible_setup'):
+                parent.scale_visible_setup()
             self.current_file_path = file_path
             parent.setWindowTitle(f"GRay-CAD 2 - {os.path.basename(file_path)}")
-
-            # Aktualisiere Plot
-            parent.update_live_plot()
-
-            QMessageBox.information(
-                parent, 
-                "Success", 
-                f"Setup loaded successfully from:\n{file_path}"
-            )
             return True
-
         except Exception as e:
-            QMessageBox.critical(
-                parent, 
-                "Error", 
-                f"Failed to load setup:\n{str(e)}"
-            )
+            QMessageBox.critical(parent, "Error", f"Failed to load setup:\n{str(e)}")
             return False
 
     def action_new(self, parent):
@@ -200,7 +189,7 @@ class Action:
         QMessageBox.information(
             parent, 
             "About", 
-            "GRay-CAD 2\nVersion 1.0\nDeveloped by Jens Gumm, TU Darmstadt, LQO-Group"
+            "GRay-CAD 2\nVersion 0.1 the forever development release\nDeveloped by Jens Gumm, TU Darmstadt, LQO-Group"
         )
 
     def action_tips_and_tricks(self, parent):

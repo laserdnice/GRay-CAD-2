@@ -1,0 +1,102 @@
+{
+    "name": "Cylindrical Lenses",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "cylindrical f=50mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.05,
+                "Focal length sagittal": 1e+30,
+                "Radius of curvature tangential": 0.025840000000000002,
+                "Radius of curvature sagittal": 1e+30,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "cylindrical f=100mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.1,
+                "Focal length sagittal": 1e+30,
+                "Radius of curvature tangential": 0.051680000000000004,
+                "Radius of curvature sagittal": 1e+30,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "cylindrical f=150mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.15,
+                "Focal length sagittal": 1e+30,
+                "Radius of curvature tangential": 0.07751999999999999,
+                "Radius of curvature sagittal": 1e+30,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "cylindrical f=-50mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.05,
+                "Focal length sagittal": 1e+30,
+                "Radius of curvature tangential": -0.025840000000000002,
+                "Radius of curvature sagittal": 1e+30,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "cylindrical f=-100mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.1,
+                "Focal length sagittal": 1e+30,
+                "Radius of curvature tangential": 0.051680000000000004,
+                "Radius of curvature sagittal": 1e+30,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "cylindrical f=-25mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.025,
+                "Focal length sagittal": 1e+30,
+                "Radius of curvature tangential": -0.012920000000000001,
+                "Radius of curvature sagittal": 1e+30,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": false,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

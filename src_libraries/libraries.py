@@ -374,7 +374,16 @@ class Libraries(QObject):
             )
             return
 
-        # Add the new component to the library
+        # NEU: Namen für neue Komponente generieren
+        base_name = f"New {selected_type}"
+        component_count = len([c for c in library_data.get("components", []) if c.get("name", "").startswith(base_name)])
+    
+        if component_count > 0:
+            new_component["name"] = f"{base_name} {component_count + 1}"
+        else:
+            new_component["name"] = base_name
+
+    # Add the new component to the library
         if "components" not in library_data:
             library_data["components"] = []
         library_data["components"].append(new_component)
@@ -497,12 +506,57 @@ class Libraries(QObject):
             
         # NEU: Komponententyp für Berechnungen speichern
         self._current_component_type = component_data.get("type", "").upper()
-    
-        properties = component_data.get("properties", {})
-        component_type = component_data.get("type", "").upper()
-        row = 0
+        # NEU: Referenz zur aktuellen Komponente speichern
+        self._current_component_data = component_data
 
-        # NEU: Dynamisch Properties hinzufügen für Linsen (wie in graycad_mainwindow.py)
+        # ComboBox auf entsprechenden Typ setzen
+        component_type = component_data.get("type", "").upper()
+        
+        # Mapping von Component-Type zu ComboBox-Text
+        type_to_combobox = {
+            "LENS": "Lens",
+            "MIRROR": "Mirror",
+            "THICK LENS": "Thick Lens",
+            "ABCD": "ABCD"
+        }
+        
+        combobox_text = type_to_combobox.get(component_type, "Lens")
+        
+        # ComboBox-Signale temporär blockieren
+        self.ui_library.comboBox_type.blockSignals(True)
+        self.ui_library.comboBox_type.setCurrentText(combobox_text)
+        self.ui_library.comboBox_type.blockSignals(False)
+        
+        # ROW-ZÄHLUNG BEGINNT BEI 0
+        row = 0
+        
+        # NAME-FELD HINZUFÜGEN
+        name_label = QtWidgets.QLabel("Name:")
+        layout.addWidget(name_label, row, 0)
+        
+        name_field = QtWidgets.QLineEdit(component_data.get("name", "Unnamed Component"))
+        layout.addWidget(name_field, row, 1, 1, 2)  # Spans über 2 Spalten
+        self._property_fields["name"] = name_field
+        
+        # Name-Änderung verarbeiten
+        def on_name_changed():
+            component_data["name"] = name_field.text()
+            self.update_component_list_display()
+    
+        name_field.textChanged.connect(on_name_changed)
+        row += 1  # WICHTIG: Row erhöhen nach Name-Feld
+    
+        # TRENNLINIE nach Name
+        separator = QtWidgets.QFrame()
+        separator.setFrameShape(QtWidgets.QFrame.HLine)
+        separator.setFrameShadow(QtWidgets.QFrame.Sunken)
+        layout.addWidget(separator, row, 0, 1, 3)
+        row += 1  # WICHTIG: Row erhöhen nach Trennlinie
+    
+        # PROPERTIES HINZUFÜGEN (ab der korrekten Row)
+        properties = component_data.get("properties", {})
+    
+        # NEU: Dynamisch Properties hinzufügen für Linsen
         if component_type == "LENS":
             if "Variable parameter" not in properties:
                 properties["Variable parameter"] = "Edit focal length"
@@ -514,152 +568,107 @@ class Libraries(QObject):
             # Aktualisiere die Komponente mit den neuen Properties
             component_data["properties"] = properties
 
-        # Definiere Paare für sagittal/tangential Properties
-        paired_props = [
-            ("Waist radius sagittal", "Waist radius tangential", "Waist radius"),
-            ("Waist position sagittal", "Waist position tangential", "Waist position"),
-            ("Rayleigh range sagittal", "Rayleigh range tangential", "Rayleigh range"),
-            ("Focal length sagittal", "Focal length tangential", "Focal length"),
-            ("Radius of curvature sagittal", "Radius of curvature tangential", "Radius of curvature"),
-            ("Input radius of curvature sagittal", "Input radius of curvature tangential", "Input radius of curvature"),
-            ("Output radius of curvature sagittal", "Output radius of curvature tangential", "Output radius of curvature"),
-            ("A sagittal", "A tangential", "A"),
-            ("B sagittal", "B tangential", "B"),
-            ("C sagittal", "C tangential", "C"),
-            ("D sagittal", "D tangential", "D")
-        ]
-
-        # Set zum schnellen Nachschlagen
-        paired_keys = set()
-        for sag, tan, _ in paired_props:
-            paired_keys.add(sag)
-            paired_keys.add(tan)
-
-        # Zeige Paare in einer Zeile
-        for sag_key, tan_key, display_name in paired_props:
-            if sag_key in properties or tan_key in properties:
-                label = QtWidgets.QLabel(display_name + ":")
-                layout.addWidget(label, row, 0)
-                
-                # Sagittal
-                if sag_key in properties:
-                    value = properties.get(sag_key, "")
-                    field_sag = QtWidgets.QLineEdit(self.value_converter.convert_to_nearest_string(value) if isinstance(value, (int, float)) else str(value))
-                    layout.addWidget(field_sag, row, 1)
-                    self._property_fields[sag_key] = field_sag
-                    field_sag.textChanged.connect(self.on_property_changed)
-                else:
-                    layout.addWidget(QtWidgets.QLabel(""), row, 1)
-                    
-                # Tangential
-                if tan_key in properties:
-                    value = properties.get(tan_key, "")
-                    field_tan = QtWidgets.QLineEdit(self.value_converter.convert_to_nearest_string(value) if isinstance(value, (int, float)) else str(value))
-                    layout.addWidget(field_tan, row, 2)
-                    self._property_fields[tan_key] = field_tan
-                    field_tan.textChanged.connect(self.on_property_changed)
-                else:
-                    layout.addWidget(QtWidgets.QLabel(""), row, 2)
-                    
-                row += 1
-
-        # Zeige alle anderen Properties einzeln
+        # Properties durchgehen und Felder erstellen
         for key, value in properties.items():
-            if key in paired_keys:
-                continue  # Schon als Paar behandelt
-                
-            # Spezielles Label für IS_ROUND
             if key == "IS_ROUND":
                 label = QtWidgets.QLabel("Spherical:")
             else:
                 label = QtWidgets.QLabel(key + ":")
             layout.addWidget(label, row, 0)
             
-            # Checkbox für boolsche Werte und IS_ROUND
-            if key == "IS_ROUND" or key == "Plan lens":
+            # Field für Property (abhängig vom Typ)
+            if isinstance(value, bool) or key.lower() == "plan lens" or key == "IS_ROUND":  # NEU: IS_ROUND hinzugefügt
                 field = QtWidgets.QCheckBox()
-                field.setChecked(bool(value))
+                field.setChecked(value)
                 layout.addWidget(field, row, 1)
                 self._property_fields[key] = field
-                field.stateChanged.connect(self.on_property_changed)
                 
-            # Dropdown für spezielle Felder
+                # NEU: Signal-Verbindungen für IS_ROUND und Plan lens
+                if key == "IS_ROUND" or key.lower() == "plan lens":
+                    field.stateChanged.connect(self.on_property_changed)
+                    field.stateChanged.connect(self.update_field_states)
+            
             elif key == "Lens material":
                 field = QtWidgets.QComboBox()
-                field.addItems(["NBK7", "Fused Silica"])
-                if value in ["NBK7", "Fused Silica"]:
+                materials = ["NBK7", "Fused Silica"]
+                field.addItems(materials)
+                if value in materials:
                     field.setCurrentText(value)
                 layout.addWidget(field, row, 1)
                 self._property_fields[key] = field
-                field.currentIndexChanged.connect(self.on_property_changed)
-                
-            # NEU: Variable parameter Dropdown (wie in graycad_mainwindow.py)
+                field.currentTextChanged.connect(self.on_property_changed)  # NEU: Signal hinzugefügt
+            
             elif key == "Variable parameter":
                 field = QtWidgets.QComboBox()
-                field.addItems(["Edit both curvatures", "Edit focal length"])
-                if value in ["Edit both curvatures", "Edit focal length"]:
+                options = ["Edit focal length", "Edit both curvatures"]
+                field.addItems(options)
+                if value in options:
                     field.setCurrentText(value)
                 layout.addWidget(field, row, 1)
                 self._property_fields[key] = field
-                
-                def on_variable_param_changed():
-                    self.update_field_states()
-                    
-                field.currentIndexChanged.connect(on_variable_param_changed)
-                
-            # Standard: QLineEdit
+                field.currentTextChanged.connect(self.on_property_changed)  # NEU: Signal hinzugefügt
+                field.currentTextChanged.connect(self.update_field_states)  # NEU: Signal hinzugefügt
+            
             else:
+                # Standard LineEdit für alle anderen Properties
                 try:
-                    field_value = self.value_converter.convert_to_nearest_string(value) if isinstance(value, (int, float)) else str(value)
+                    field = QtWidgets.QLineEdit(self.value_converter.convert_to_nearest_string(value))
                 except:
-                    field_value = str(value)
-                field = QtWidgets.QLineEdit(field_value)
+                    field = QtWidgets.QLineEdit(str(value))
                 layout.addWidget(field, row, 1)
                 self._property_fields[key] = field
-                field.textChanged.connect(self.on_property_changed)
-                
+                field.textChanged.connect(self.on_property_changed)  # NEU: Signal hinzugefügt
+        
             row += 1
-
-        # Spacer am Ende
-        spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
+    
+        # NEU: Live-Synchronisierung für IS_ROUND hinzufügen
+        self._setup_is_round_synchronization()
+        
+        # Spacer am Ende hinzufügen
+        spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         layout.addItem(spacer, row, 0, 1, 3)
+        
+        # NEU: Initiale Feldstatus-Aktualisierung
+        self.update_field_states()
 
-        # IS_ROUND Synchronisierung einrichten
-        if "IS_ROUND" in self._property_fields:
-            self._property_fields["IS_ROUND"].stateChanged.connect(self.update_field_states)
-            
-        # NEU: Variable parameter Synchronisierung einrichten
-        if "Variable parameter" in self._property_fields:
-            self._property_fields["Variable parameter"].currentIndexChanged.connect(self.update_field_states)
-            
-        # Live-Synchronisierung für sagittal/tangential Paare
-        for sag_key, tan_key, _ in paired_props:
+    def _setup_is_round_synchronization(self):
+        """
+        Setzt die Live-Synchronisierung für IS_ROUND auf (wie im MainWindow)
+        """
+        if "IS_ROUND" not in self._property_fields:
+            return
+        
+        # Verbinde nur sagittale Felder mit Synchronisierung
+        paired_props = [
+            ("Waist radius sagittal", "Waist radius tangential"),
+            ("Waist position sagittal", "Waist position tangential"),
+            ("Focal length sagittal", "Focal length tangential"),
+            ("Radius of curvature sagittal", "Radius of curvature tangential"),
+            ("Input radius of curvature sagittal", "Input radius of curvature tangential"),
+            ("Output radius of curvature sagittal", "Output radius of curvature tangential"),
+        ]
+
+        for sag_key, tan_key in paired_props:
             if sag_key in self._property_fields and tan_key in self._property_fields:
                 field_sag = self._property_fields[sag_key]
                 field_tan = self._property_fields[tan_key]
                 
-                def make_sync_function(field_sag, field_tan):
-                    def sync_sagittal_to_tangential():
+                def make_sync_function(source_field, target_field):
+                    def sync_to_target():
+                        # Nur synchronisieren, wenn IS_ROUND aktiv ist
                         if "IS_ROUND" in self._property_fields:
                             is_round_field = self._property_fields["IS_ROUND"]
                             if isinstance(is_round_field, QtWidgets.QCheckBox) and is_round_field.isChecked():
-                                field_tan.blockSignals(True)
-                                field_tan.setText(field_sag.text())
-                                field_tan.blockSignals(False)
-                    return sync_sagittal_to_tangential
+                                target_field.blockSignals(True)
+                                target_field.setText(source_field.text())
+                                target_field.blockSignals(False)
+                    return sync_to_target
                 
-                if "Focal length" in sag_key or "Radius of curvature" in sag_key:
-                    field_sag.textChanged.connect(self.on_property_changed)
-                if "Focal length" in tan_key or "Radius of curvature" in tan_key:
-                    field_tan.textChanged.connect(self.on_property_changed)
-                
+                # NUR sagittales Feld synchronisiert zum tangentialen (EINSEITIG!)
                 field_sag.textChanged.connect(make_sync_function(field_sag, field_tan))
-        
-        # Initiale Feldstatus-Aktualisierung
-        self.update_field_states()
 
     def update_field_states(self):
-        """Aktualisiert Feldstatus basierend auf IS_ROUND und Variable parameter (wie in graycad_mainwindow.py)"""
+        """Aktualisiert Feldstatus basierend auf IS_ROUND und Variable parameter"""
         if not hasattr(self, '_property_fields'):
             return
         
@@ -685,7 +694,7 @@ class Libraries(QObject):
         
         # 1. Variable parameter Logik NUR anwenden wenn das Feld existiert (nur für LENS)
         has_variable_parameter = "Variable parameter" in self._property_fields
-    
+
         if has_variable_parameter:
             # Felder nach Variable parameter setzen (nur für LENS)
             for key in focal_length_fields:
@@ -874,7 +883,7 @@ class Libraries(QObject):
         """
         if not hasattr(self, '_property_fields') or not self._property_fields:
             return
-            
+        
         # Get the currently selected library file
         selected_file_index = self.ui_library.listView_libraries.currentIndex().row()
         model = self.ui_library.listView_libraries.model()
@@ -919,8 +928,23 @@ class Libraries(QObject):
         # Update component properties from UI fields
         component = library_data["components"][selected_component_index]
         
+        # NEU: Update Component Type aus ComboBox
+        selected_type = self.ui_library.comboBox_type.currentText()
+        type_mapping = {
+            "Lens": "LENS",
+            "Mirror": "MIRROR", 
+            "Thick Lens": "THICK LENS",
+            "ABCD": "ABCD"
+        }
+        component_type = type_mapping.get(selected_type, "MIRROR")
+        component["type"] = component_type
+
+        # Update andere Felder
         for key, field in self._property_fields.items():
-            if isinstance(field, QtWidgets.QCheckBox):
+            if key == "name":
+                # Spezielle Behandlung für Name (direkt auf component-Level)
+                component["name"] = field.text()
+            elif isinstance(field, QtWidgets.QCheckBox):
                 component["properties"][key] = field.isChecked()
             elif isinstance(field, QtWidgets.QComboBox):
                 component["properties"][key] = field.currentText()
@@ -932,6 +956,10 @@ class Libraries(QObject):
                 except:
                     # Falls das fehlschlägt, als String speichern
                     component["properties"][key] = field.text()
+
+        # NEU: Aktualisiere auch die lokalen components_data
+        if 0 <= selected_component_index < len(self.components_data):
+            self.components_data[selected_component_index] = component
 
         # Save the updated library file
         try:
@@ -952,7 +980,7 @@ class Libraries(QObject):
                 self.library_window,
                 "Error",
                 f"An error occurred while saving the library file: {e}"
-            )
+        )
 
     def load_generic_components(self):
         """
@@ -985,6 +1013,7 @@ class Libraries(QObject):
         Wird aufgerufen wenn sich die Auswahl in comboBox_type ändert.
         Zeigt die entsprechenden Properties aus Generic.json an.
         """
+    
         if not hasattr(self, 'generic_data'):
             self.load_generic_components()
         
@@ -1000,6 +1029,9 @@ class Libraries(QObject):
         if not component_type:
             return
         
+        # NEU: Aktualisiere den aktuellen Komponententyp
+        self._current_component_type = component_type
+        
         # Finde die entsprechende Komponente in Generic.json
         generic_component = None
         for component in self.generic_data.get("components", []):
@@ -1009,6 +1041,7 @@ class Libraries(QObject):
         
         if generic_component:
             # Zeige die Properties der Generic-Komponente an
+            # WICHTIG: Signals NICHT blockieren hier, da diese Änderung vom User kommt
             self.show_component_properties(generic_component)
         else:
             QMessageBox.warning(
@@ -1016,4 +1049,34 @@ class Libraries(QObject):
                 "Component Not Found",
                 f"No generic component found for type: {selected_type}"
             )
+
+    def update_component_list_display(self):
+        """
+        Aktualisiert die Anzeige der Komponenten-Liste wenn sich Namen ändern
+        """
+        # Get current selection
+        selected_component_index = self.ui_library.listView_lib_components.currentIndex().row()
+        
+        if selected_component_index >= 0 and selected_component_index < len(self.components_data):
+            # Aktualisiere den Namen in der Liste
+            model = self.ui_library.listView_lib_components.model()
+            if model and selected_component_index < model.rowCount():
+                item = model.item(selected_component_index)
+                if item:
+                    new_name = self.components_data[selected_component_index].get("name", "Unnamed")
+                    item.setText(new_name)
+
+    def validate_component_name(self, name, exclude_index=-1):
+        """
+        Prüft ob ein Komponenten-Name bereits existiert
+        """
+        if not hasattr(self, 'components_data'):
+            return True
+        
+        for i, component in enumerate(self.components_data):
+            if i == exclude_index:
+                continue
+            if component.get("name", "").strip().lower() == name.strip().lower():
+                return False
+        return True
 

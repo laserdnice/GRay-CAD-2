@@ -4,17 +4,130 @@
     "components": [
         {
             "type": "LENS",
-            "name": "Lens",
+            "name": "spherical f=100mm",
             "manufacturer": "",
             "properties": {
-                "Focal length tangential": 0.09606,
-                "Focal length sagittal": 0.09606,
-                "Radius of curvature tangential": 0.1,
-                "Radius of curvature sagittal": 0.1,
+                "Focal length tangential": 0.1,
+                "Focal length sagittal": 0.1,
+                "Radius of curvature tangential": 0.051680000000000004,
+                "Radius of curvature sagittal": 0.051680000000000004,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "spherical f=50mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.05,
+                "Focal length sagittal": 0.05,
+                "Radius of curvature tangential": 0.025840000000000002,
+                "Radius of curvature sagittal": 0.025840000000000002,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "spherical f=25mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.025,
+                "Focal length sagittal": 0.025,
+                "Radius of curvature tangential": 0.012920000000000001,
+                "Radius of curvature sagittal": 0.012920000000000001,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "spherical f=-100mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.1,
+                "Focal length sagittal": -0.1,
+                "Radius of curvature tangential": -0.051680000000000004,
+                "Radius of curvature sagittal": -0.051680000000000004,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "spherical f=-50mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.05,
+                "Focal length sagittal": -0.05,
+                "Radius of curvature tangential": -0.025840000000000002,
+                "Radius of curvature sagittal": -0.025840000000000002,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "spherical f=-25mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.025,
+                "Focal length sagittal": -0.025,
+                "Radius of curvature tangential": -0.025840000000000002,
+                "Radius of curvature sagittal": -0.025840000000000002,
                 "Lens material": "NBK7",
                 "Plan lens": false,
-                "Design wavelength": 5.14e-07,
-                "IS_ROUND": true
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "spherical f=150mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.15,
+                "Focal length sagittal": 0.15,
+                "Radius of curvature tangential": 0.07751999999999999,
+                "Radius of curvature sagittal": 0.07751999999999999,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "spherical f=200mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 200.0,
+                "Focal length sagittal": 200.0,
+                "Radius of curvature tangential": 103.36,
+                "Radius of curvature sagittal": 103.36,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Design wavelength": 5.140000000000001e-07,
+                "IS_ROUND": true,
+                "Variable parameter": "Edit focal length"
             }
         }
     ]
