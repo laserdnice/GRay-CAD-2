@@ -62,7 +62,7 @@ class OptimizationWorker(QObject):
         results = []
         best_result = None
         best_fitness = float('inf')
-        total_generations = 30
+        total_generations = 50
 
         self.optimizer.max_lenses = max_lenses
         self.optimizer.problem()
@@ -581,7 +581,7 @@ class LensSystemOptimizer:
                     ui_obj = getattr(self, attr_name)
                     if hasattr(ui_obj, 'progressBar'):
                         # Setze progressBar in der UI
-                        total_steps = num_runs * 30  # 50 Generationen pro Run
+                        total_steps = num_runs * 50  # 50 Generationen pro Run
                         ui_obj.progressBar.setMinimum(0)
                         ui_obj.progressBar.setMaximum(total_steps)
                         ui_obj.progressBar.setValue(0)
