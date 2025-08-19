@@ -261,12 +261,17 @@ class PropertiesHandler:
         
         # Prüfe, ob es sich um eine THICK LENS handelt
         is_thick_lens = False
+        is_mirror = False          # NEU
         if hasattr(self, "_last_component_item") and self._last_component_item is not None:
             component = self._last_component_item.data(QtCore.Qt.UserRole)
             if isinstance(component, dict):
                 ctype = component.get("type", "").strip().upper()
                 is_thick_lens = (ctype == "THICK LENS")
-        
+                is_mirror = (ctype == "MIRROR")
+            else:
+                is_mirror = False
+        else:
+            is_mirror = False
         # Die zu prüfenden Feldgruppen
         focal_length_fields = ["Focal length sagittal", "Focal length tangential"]
         curvature_fields = [
@@ -275,8 +280,8 @@ class PropertiesHandler:
             "Output radius of curvature sagittal", "Output radius of curvature tangential"
         ]
         
-        # 1. Zuerst Felder nach Variable parameter setzen (aber nicht für THICK LENS)
-        if not is_thick_lens:
+        # 1. Variable-Parameter-Logik (nicht für THICK LENS/MIRROR)
+        if not is_thick_lens and not is_mirror:
             for key in focal_length_fields:
                 field = self._property_fields.get(key)
                 if field:
@@ -286,7 +291,6 @@ class PropertiesHandler:
                     else:
                         field.setReadOnly(True)
                         field.setStyleSheet("background-color: #eee; color: #888;")
-            
             for key in curvature_fields:
                 field = self._property_fields.get(key)
                 if field:
@@ -297,14 +301,14 @@ class PropertiesHandler:
                         field.setReadOnly(False)
                         field.setStyleSheet("")
         else:
-            # Für THICK LENS: Krümmungsradius-Felder immer frei
+            # THICK LENS & MIRROR: Krümmungsradien immer frei
             for key in curvature_fields:
                 field = self._property_fields.get(key)
                 if field:
                     field.setReadOnly(False)
                     field.setStyleSheet("")
         
-        # 2. IS_ROUND-Logik anwenden (KORRIGIERT)
+        # 2. IS_ROUND-Logik
         paired_props = [
             ("Waist radius sagittal", "Waist radius tangential"),
             ("Waist position sagittal", "Waist position tangential"),
@@ -320,33 +324,31 @@ class PropertiesHandler:
                 field_sag = self._property_fields[sag_key]
                 field_tan = self._property_fields[tan_key]
                 
+                # WENN IS_ROUND aktiv: immer sperren (auch bei MIRROR und THICK LENS)
                 if is_round:
-                    # IS_ROUND = True: Tangential-Feld sperren und synchronisieren
                     field_tan.setReadOnly(True)
                     field_tan.setStyleSheet("background-color: #eee; color: #888;")
-                    
-                    # Wert synchronisieren
                     if field_tan.text() != field_sag.text():
                         field_tan.blockSignals(True)
                         field_tan.setText(field_sag.text())
                         field_tan.blockSignals(False)
                 else:
-                    # IS_ROUND = False: Tangential-Feld entsperren (aber nur wenn nicht durch Variable parameter gesperrt)
-                    if not is_thick_lens:
-                        # Für normale LENS: Prüfe Variable parameter
+                    # Kein IS_ROUND: normale Entsperr-/Sperrlogik je nach Typ
+                    if is_thick_lens or is_mirror:
+                        # Alle frei
+                        field_sag.setReadOnly(False)
+                        field_sag.setStyleSheet("")
+                        field_tan.setReadOnly(False)
+                        field_tan.setStyleSheet("")
+                    else:
+                        # Standard (Lens etc.): Variable-Parameter-Logik
                         if (tan_key in focal_length_fields and not edit_focal_length) or \
                            (tan_key in curvature_fields and edit_focal_length):
-                            # Bleibt gesperrt durch Variable parameter
                             field_tan.setReadOnly(True)
                             field_tan.setStyleSheet("background-color: #eee; color: #888;")
                         else:
-                            # Entsperren
                             field_tan.setReadOnly(False)
                             field_tan.setStyleSheet("")
-                    else:
-                        # Für THICK LENS: Immer entsperren
-                        field_tan.setReadOnly(False)
-                        field_tan.setStyleSheet("")
         
     def make_field_slot(self, key, component):
         def slot():
