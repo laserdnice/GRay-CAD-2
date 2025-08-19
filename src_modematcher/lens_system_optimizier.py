@@ -535,7 +535,7 @@ class LensSystemOptimizer:
         fitness_waist = rel_waist_error_sag + rel_waist_error_tan
 
         # Normalisierte Positionsabweichung (Fokusposition)
-        target_pos_sag = self.distance + self.waist_position_goal_sag 
+        target_pos_sag = self.distance + self.waist_position_goal_sag
         target_pos_tan = self.distance + self.waist_position_goal_tan
 
         rel_pos_error_sag = abs(target_pos_sag - focus_pos_sag)/(abs(target_pos_sag) + abs(focus_pos_sag))
@@ -736,6 +736,25 @@ class LensSystemOptimizer:
 
                 table.setSortingEnabled(True)
                 table.sortItems(0, Qt.AscendingOrder)
+
+                # Spaltenbreiten an Header anpassen
+                header = table.horizontalHeader()
+                for col in range(table.columnCount()):
+                    # Mindestbreite ist Header-Text plus Padding
+                    header_text = table.horizontalHeaderItem(col).text() if table.horizontalHeaderItem(col) else ""
+                    font_metrics = table.fontMetrics()
+                    header_width = font_metrics.boundingRect(header_text).width() + 20
+                    
+                    # Aktuelle Breite der Spalte (nach Inhalt)
+                    table.resizeColumnToContents(col)
+                    content_width = table.columnWidth(col)
+                    
+                    # Setze Breite auf das Maximum von Header-Breite und Inhaltsbreite
+                    table.setColumnWidth(col, max(header_width, content_width))
+                
+                # Spezialfall: Checkbox-Spalte (feste Breite)
+                if table.columnCount() > 6:
+                    table.setColumnWidth(6, 60)
 
                 if not getattr(table, "_preview_connected", False):
                     table.itemSelectionChanged.connect(self._on_table_selection_changed)
