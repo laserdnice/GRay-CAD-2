@@ -259,9 +259,10 @@ class MainWindow(QMainWindow, PropertiesHandler):
         # Projects-Ordner in Fenstertitel anzeigen
         self.setWindowTitle(f"GRay-CAD 2 - Projects: {self.action_handler.projects_dir}")
         
-        self._previous_setup_index = 0  # existiert schon – sicherstellen, dass gesetzt
+        self._previous_setup_index = 0
         self._preview_index = None
         self._preview_active = False
+        self._suppress_save_on_selection = False   # NEU
     
     def update_live_plot_delayed_original(self):
         """Original-Implementation für Live-Plot-Updates"""
@@ -355,18 +356,18 @@ class MainWindow(QMainWindow, PropertiesHandler):
         if index < 0 or index >= len(self.setups):
             return
 
-        # Wenn wir von einem normalen Setup weggehen (nicht Preview), vorher speichern
-        if (hasattr(self, '_previous_setup_index') and
-            self._previous_setup_index is not None and
-            self._previous_setup_index != index and
-            (self._preview_index is None or self._previous_setup_index != self._preview_index)):
-            self.save_current_setup(self._previous_setup_index)
+        # Unterdrücktes Speichern (z.B. beim Löschen)
+        if getattr(self, "_suppress_save_on_selection", False):
+            self._previous_setup_index = index
+        else:
+            if (hasattr(self, '_previous_setup_index') and
+                self._previous_setup_index is not None and
+                self._previous_setup_index != index and
+                (self._preview_index is None or self._previous_setup_index != self._preview_index)):
+                self.save_current_setup(self._previous_setup_index)
 
-        # Wenn wir Preview verlassen -> Flag zurücksetzen (kein Restore nötig,
-        # da Preview eigenes Setup ist)
         if self._preview_index is not None and index != self._preview_index:
             self._preview_active = False
-
         self._previous_setup_index = index
 
         # Property-Panel leeren
@@ -393,17 +394,36 @@ class MainWindow(QMainWindow, PropertiesHandler):
         idx = self.ui.comboBoxSetup.currentIndex()
         if idx < 0 or idx >= len(self.setups):
             return
-        # Optional: Das erste Setup darf nicht gelöscht werden
         if len(self.setups) == 1:
             QtWidgets.QMessageBox.warning(self, "Warnung", "At least one setup must be maintained.")
             return
-        # Setup entfernen
+
+        # Aktuelles (zu löschendes) Setup nicht mehr speichern,
+        # aber vorheriges (falls nötig) ist schon persistiert.
+        # Bestimme Zielindex nach Löschung
+        if idx == len(self.setups) - 1:
+            fallback_idx = idx - 1
+        else:
+            fallback_idx = idx  # Das rutscht an die Stelle des gelöschten
+
         del self.setups[idx]
         self.update_setup_names_and_combobox()
-        # Index anpassen: vorheriges oder erstes Setup auswählen
-        if idx >= len(self.setups):
-            idx = len(self.setups) - 1
-        self.ui.comboBoxSetup.setCurrentIndex(idx)
+
+        if not self.setups:
+            return
+
+        if fallback_idx < 0:
+            fallback_idx = 0
+
+        # Unterdrücke Speichern beim Umschalten
+        self._suppress_save_on_selection = True
+        self.ui.comboBoxSetup.setCurrentIndex(fallback_idx)
+        self._suppress_save_on_selection = False
+
+        # Liste manuell laden (weil wir Speichern/Wechsel unterdrückt haben)
+        self.load_setup_into_list(self.setups[fallback_idx]["components"])
+        self.update_live_plot()
+        self._previous_setup_index = fallback_idx
 
     def closeEvent(self, event):
         try:
