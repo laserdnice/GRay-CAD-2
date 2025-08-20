@@ -8,6 +8,8 @@ import config
 from PyQt5.QtWidgets import QMessageBox, QProgressDialog, QApplication, QTableWidgetItem, QCheckBox
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, Qt
 from src_physics.value_converter import ValueConverter
+from src_physics.material import Material
+import itertools
 
 class NumericTableWidgetItem(QTableWidgetItem):
     """QTableWidgetItem-Subklasse für korrekte numerische Sortierung"""
@@ -25,11 +27,12 @@ class OptimizationWorker(QObject):
     error = pyqtSignal(str)      # Signal für Fehler
     progress = pyqtSignal(int)   # Signal für Fortschrittsanzeige (nur aktueller Wert)
     
-    def __init__(self, optimizer, max_lenses, num_runs=3):
+    def __init__(self, optimizer, max_lenses, num_runs=100, total_generations=30):
         super().__init__()
         self.optimizer = optimizer
         self.max_lenses = max_lenses
         self.num_runs = num_runs
+        self.total_generations = total_generations
         self.abort_flag = False
         
     @pyqtSlot()
@@ -50,7 +53,7 @@ class OptimizationWorker(QObject):
                 return
             
             # Führe Multi-Run Optimierung durch
-            result = self._run_multi_optimization(max_lenses, self.num_runs)
+            result = self._run_multi_optimization(max_lenses, self.num_runs, self.total_generations)
             
             # Sende Ergebnis zurück
             self.finished.emit(result)
@@ -58,14 +61,15 @@ class OptimizationWorker(QObject):
         except Exception as e:
             self.error.emit(f"Error during optimization: {str(e)}")
     
-    def _run_multi_optimization(self, max_lenses, num_runs):
+    def _run_multi_optimization(self, max_lenses, num_runs, total_generations):
         results = []
         best_result = None
         best_fitness = float('inf')
-        total_generations = 50
 
         self.optimizer.max_lenses = max_lenses
         self.optimizer.problem()
+
+        seen_signatures = set()
 
         for run in range(num_runs):
             if self.abort_flag:
@@ -83,7 +87,7 @@ class OptimizationWorker(QObject):
             for gen in range(total_generations):
                 if self.abort_flag:
                     break
-                population = algorithms.varAnd(population, self.optimizer.toolbox, 0.9, 0.2)
+                population = algorithms.varAnd(population, self.optimizer.toolbox, 0.5, 0.2)
                 fits = self.optimizer.toolbox.map(self.optimizer.toolbox.evaluate, population)
                 for fit, ind in zip(fits, population):
                     ind.fitness.values = fit
@@ -102,6 +106,12 @@ class OptimizationWorker(QObject):
 
                 current_fitness = best_individual.fitness.values[0]
                 waist_sag, waist_tan, position_sag, position_tan = self.optimizer.calculate_beam_parameters(best_individual)
+
+                # Duplikate filtern
+                sig = self._individual_signature(best_individual)
+                if sig in seen_signatures:
+                    continue  # Skip duplicate combination
+                seen_signatures.add(sig)
 
                 result = {
                     'lenses': [(lens, pos) for lens, pos in best_individual],
@@ -124,11 +134,39 @@ class OptimizationWorker(QObject):
         """Bricht die Optimierung ab"""
         self.abort_flag = True
 
+    def _individual_signature(self, individual, pos_digits=6, f_digits=9):
+        """
+        Erzeugt eine kanonische Signatur eines Individuums zur Duplikat-Erkennung.
+        - Positionen gerundet (pos_digits)
+        - Focal lengths zur Absicherung einbezogen
+        """
+        sig_parts = []
+        for lens, pos in sorted(individual, key=lambda x: x[1]):
+            props = lens.get('properties', {})
+            f_sag = props.get('Focal length sagittal')
+            f_tan = props.get('Focal length tangential')
+            try:
+                f_sag_r = round(float(f_sag), f_digits) if f_sag is not None else None
+            except Exception:
+                f_sag_r = None
+            try:
+                f_tan_r = round(float(f_tan), f_digits) if f_tan is not None else None
+            except Exception:
+                f_tan_r = None
+            sig_parts.append((
+                lens.get('name', ''),
+                round(float(pos), pos_digits),
+                f_sag_r,
+                f_tan_r
+            ))
+        return tuple(sig_parts)
+
 class LensSystemOptimizer:
     def __init__(self, matrices):
         self.matrices = matrices
         self.lens_library = []  # Wird dynamisch geladen
         self.vc = ValueConverter()
+        self.material = Material
         
         # DEAP Setup entfernt - wird jetzt global in graycad_start.py gemacht
         self.toolbox = base.Toolbox()
@@ -487,10 +525,6 @@ class LensSystemOptimizer:
         # Berechne echte w₀-Werte
         w0_sag, focus_pos_sag = get_w0_and_focus(q_sag_final, self.distance)
         w0_tan, focus_pos_tan = get_w0_and_focus(q_tan_final, self.distance)
-
-        # Debug entfernen:
-        # print(f"imaginary part of q_sag_final: {q_sag_final.imag}")
-        # print(f"real part of q_sag_final: {q_sag_final.real}")
         
         return w0_sag, w0_tan, focus_pos_sag, focus_pos_tan
 
@@ -499,8 +533,12 @@ class LensSystemOptimizer:
         properties = lens.get('properties', {})
         design_wavelength = properties.get('Design wavelength')
         lens_material = properties.get('Lens material')
-        f_sag = properties.get('Focal length sagittal')
-        f_tan = properties.get('Focal length tangential')
+        n_design = self.material.get_n(lens_material, design_wavelength)
+        n = self.material.get_n(lens_material, self.wavelength)
+        f_design_sag = properties.get('Focal length sagittal')
+        f_design_tan = properties.get('Focal length tangential')
+        f_sag = ((n_design-1)/(n-1)) * f_design_sag
+        f_tan = ((n_design-1)/(n-1)) * f_design_tan
 
         # Fallback: Wenn nur eine Brennweite existiert, beide gleich setzen
         if f_sag is None and f_tan is not None:
@@ -527,7 +565,8 @@ class LensSystemOptimizer:
         """Berechne Fitness für ein gegebenes Individuum"""
         # Berechne resultierende Strahlparameter
         w0_sag, w0_tan, focus_pos_sag, focus_pos_tan = self.calculate_beam_parameters(individual)
-        # Berechne Abweichung von Zielparametern (jetzt auf w0!)
+
+        # Berechne Abweichung von Zielparametern
         rel_waist_error_sag = abs(self.waist_goal_sag - w0_sag)/(abs(self.waist_goal_sag))
         rel_waist_error_tan = abs(self.waist_goal_tan - w0_tan)/(abs(self.waist_goal_tan))
         
@@ -537,14 +576,17 @@ class LensSystemOptimizer:
         target_pos_sag = self.distance + self.waist_position_goal_sag
         target_pos_tan = self.distance + self.waist_position_goal_tan
 
-        rel_pos_error_sag = abs(target_pos_sag - focus_pos_sag)/(abs(target_pos_sag))
-        rel_pos_error_tan = abs(target_pos_tan - focus_pos_tan)/(abs(target_pos_tan))
+        offset_sag = 1 - abs(target_pos_sag) / (1 + abs(focus_pos_sag))
+        offset_tan = 1 - abs(target_pos_tan) / (1 + abs(focus_pos_tan))
+
+        rel_pos_error_sag = abs(target_pos_sag - focus_pos_sag) / (abs(target_pos_sag) + abs(focus_pos_sag) + offset_sag)
+        rel_pos_error_tan = abs(target_pos_tan - focus_pos_tan) / (abs(target_pos_tan) + abs(focus_pos_tan) + offset_tan)
 
         fitness_position = rel_pos_error_sag + rel_pos_error_tan
 
         # Gewichtung zwischen Strahlgröße und Position
         try:
-            weight = self.ui.modematcher_calculation.weight_slider.value() / 100.0
+            weight = self.ui_modematcher_calculation.weight_slider.value() / 100.0
         except AttributeError:
             weight = 0.5
 
@@ -552,8 +594,13 @@ class LensSystemOptimizer:
 
         return (fitness,)
     
-    def optimize_lens_system(self, max_lenses, num_runs=100):
-        """Startet die Multi-Run-Optimierung in einem separaten Thread"""
+    def optimize_lens_system(self, max_lenses, num_runs=100, total_generation=60, method='genetic'):
+        """Startet die Optimierung - entweder genetisch oder systematisch"""
+        
+        if method == 'systematic':
+            return self.optimize_deterministic_lens_system(max_lenses, method='systematic')
+        
+        # Existing genetic algorithm code...
         self.get_beam_parameters()
         self._load_lens_library_from_temp_file()
         
@@ -571,7 +618,7 @@ class LensSystemOptimizer:
             self.thread = QThread()
             self.worker = OptimizationWorker(self, max_lenses, num_runs)
             
-            # UI-Elemente aktualisieren
+            # UI-Elemente aktualisieren NUR für genetische Optimierung
             ui_found = False
             
             # Suche progressBar in der UI
@@ -579,8 +626,8 @@ class LensSystemOptimizer:
                 if hasattr(self, attr_name):
                     ui_obj = getattr(self, attr_name)
                     if hasattr(ui_obj, 'progressBar'):
-                        # Setze progressBar in der UI
-                        total_steps = num_runs * 50  # 50 Generationen pro Run
+                        # Setze progressBar für GENETISCHE Optimierung
+                        total_steps = num_runs * total_generation
                         ui_obj.progressBar.setMinimum(0)
                         ui_obj.progressBar.setMaximum(total_steps)
                         ui_obj.progressBar.setValue(0)
@@ -597,7 +644,7 @@ class LensSystemOptimizer:
             
             # Fallback zu QProgressDialog wenn keine UI-ProgressBar gefunden wurde
             if not ui_found:
-                progress_dialog = QProgressDialog("Running multi-optimization...", "Cancel", 0, num_runs * 50)
+                progress_dialog = QProgressDialog("Running multi-optimization...", "Cancel", 0, num_runs * total_generation)
                 progress_dialog.setWindowTitle("Optimization Progress")
                 progress_dialog.setMinimumDuration(0)
                 progress_dialog.setValue(0)
@@ -901,7 +948,7 @@ class LensSystemOptimizer:
             initial_positions,
             method='L-BFGS-B',
             bounds=bounds,
-            options={'maxiter': 100, 'disp': False}
+            options={'maxiter': 150, 'disp': False}
         )
         
         # Erstelle optimiertes Individuum als neue Liste
@@ -1011,3 +1058,182 @@ class LensSystemOptimizer:
             QMessageBox.information(None, "Create Setups", f"Created {len(selected)} setup(s).")
         except Exception as e:
             QMessageBox.critical(None, "Error", f"Error creating setups: {e}")
+
+    def generate_all_lens_combinations(self, max_lenses):
+        """Generiert systematisch alle möglichen Linsenkombinationen"""
+        all_combinations = []
+        
+        # Für jede Anzahl von Linsen (1 bis max_lenses)
+        for num_lenses in range(1, max_lenses + 1):
+            # Alle Kombinationen mit Wiederholung
+            for lens_combo in itertools.combinations_with_replacement(self.lens_library, num_lenses):
+                all_combinations.append(lens_combo)
+        
+        return all_combinations
+
+    def build_systematic_individual(self, lens_combination, position_grid_points=10):
+        """Erstellt Individuum mit systematischen Positionen"""
+        individual = []
+        
+        # Erstelle gleichmäßige Positionsverteilung
+        if len(lens_combination) == 1:
+            positions = [self.distance / 2]  # Mitte
+        else:
+            positions = np.linspace(0.1 * self.distance, 0.9 * self.distance, len(lens_combination))
+        
+        for lens, position in zip(lens_combination, positions):
+            individual.append((lens, position))
+        
+        # Sortiere nach Position
+        individual.sort(key=lambda x: x[1])
+        return creator.Individual(individual)
+
+    def optimize_systematic_lens_system(self, max_lenses, position_grid_points=20):
+        """Optimiert systematisch durch alle Kombinationen mit Grid-Positionen"""
+        self.get_beam_parameters()
+        self._load_lens_library_from_temp_file()
+        
+        best_results = []
+        all_combinations = self.generate_all_lens_combinations(max_lenses)
+        
+        total_combinations = len(all_combinations)
+        processed = 0
+        
+        # UI für Progress finden und korrekt konfigurieren
+        ui = None
+        for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
+            if hasattr(self, attr_name):
+                ui = getattr(self, attr_name)
+                if hasattr(ui, 'progressBar'):
+                    # WICHTIG: Setze Maximum auf die tatsächliche Anzahl Kombinationen
+                    ui.progressBar.setMinimum(0)
+                    ui.progressBar.setMaximum(total_combinations)
+                    ui.progressBar.setValue(0)
+                    break
+        
+        print(f"Starting systematic optimization: {total_combinations} lens combinations to process")
+        seen_signatures = set()
+        
+        for combo_idx, lens_combo in enumerate(all_combinations):
+            # Für jede Linsenkombination: optimiere Positionen auf Grid
+            best_fitness = float('inf')
+            best_individual = None
+            
+            # Erstelle Position-Grid für diese Kombination
+            if len(lens_combo) == 1:
+                position_grids = [np.linspace(0.1 * self.distance, 0.9 * self.distance, position_grid_points)]
+            else:
+                # Für mehrere Linsen: alle Permutationen von Grid-Positionen
+                position_candidates = np.linspace(0.05 * self.distance, 0.95 * self.distance, position_grid_points)
+                position_grids = list(itertools.permutations(position_candidates, len(lens_combo)))
+                # Begrenzen um Rechenzeit zu sparen
+                position_grids = position_grids[:min(100, len(position_grids))]
+            
+            for positions in position_grids:
+                # Sortiere Positionen
+                sorted_positions = sorted(positions)
+                
+                # Erstelle Individuum
+                individual = []
+                for lens, pos in zip(lens_combo, sorted_positions):
+                    individual.append((lens, pos))
+                
+                individual = creator.Individual(individual)
+                
+                # Berechne Fitness
+                fitness = self.fitness_function(individual)[0]
+                
+                if fitness < best_fitness:
+                    best_fitness = fitness
+                    best_individual = individual.copy()
+                    best_individual.fitness.values = (fitness,)
+            
+            # Lokale Optimierung der besten Grid-Position
+            if best_individual:
+                try:
+                    optimized = self._local_optimize(best_individual)
+                    if optimized.fitness.values[0] < best_individual.fitness.values[0]:
+                        best_individual = optimized
+                except:
+                    pass
+                
+                # Duplikate filtern
+                sig = self._individual_signature(best_individual)
+                if sig not in seen_signatures:
+                    seen_signatures.add(sig)
+                    
+                    # Zu Ergebnissen hinzufügen
+                    waist_sag, waist_tan, pos_sag, pos_tan = self.calculate_beam_parameters(best_individual)
+                    result = {
+                        'lenses': [(lens, pos) for lens, pos in best_individual],
+                        'waist_sag': waist_sag,
+                        'waist_tan': waist_tan,
+                        'position_sag': pos_sag,
+                        'position_tan': pos_tan,
+                        'fitness': best_individual.fitness.values[0],
+                        'combination': lens_combo
+                    }
+                    best_results.append(result)
+            
+            # Progress Update: Jede Kombination = 1 Schritt
+            processed = combo_idx + 1
+            if ui and hasattr(ui, 'progressBar'):
+                ui.progressBar.setValue(processed)
+                QApplication.processEvents()  # UI aktualisieren
+            
+            if processed % 10 == 0:
+                print(f"Processed {processed}/{total_combinations} combinations")
+        
+        # Am Ende: ProgressBar auf Maximum setzen
+        if ui and hasattr(ui, 'progressBar'):
+            ui.progressBar.setValue(total_combinations)
+        
+        # Sortiere nach Fitness
+        best_results.sort(key=lambda x: x['fitness'])
+        print(f"Systematic optimization completed: {len(best_results)} unique results found")
+        return best_results[:50]  # Top 50 Ergebnisse
+
+    def _individual_signature(self, individual, pos_digits=6, f_digits=9):
+        """
+        Erzeugt eine kanonische Signatur eines Individuums zur Duplikat-Erkennung.
+        - Positionen gerundet (pos_digits)
+        - Focal lengths zur Absicherung einbezogen
+        """
+        sig_parts = []
+        for lens, pos in sorted(individual, key=lambda x: x[1]):
+            props = lens.get('properties', {})
+            f_sag = props.get('Focal length sagittal')
+            f_tan = props.get('Focal length tangential')
+            try:
+                f_sag_r = round(float(f_sag), f_digits) if f_sag is not None else None
+            except Exception:
+                f_sag_r = None
+            try:
+                f_tan_r = round(float(f_tan), f_digits) if f_tan is not None else None
+            except Exception:
+                f_tan_r = None
+            sig_parts.append((
+                lens.get('name', ''),
+                round(float(pos), pos_digits),
+                f_sag_r,
+                f_tan_r
+            ))
+        return tuple(sig_parts)
+
+    def optimize_deterministic_lens_system(self, max_lenses, method='systematic'):
+        """Deterministische Optimierung ohne Zufälle"""
+        
+        if method == 'systematic':
+            try:
+                results = self.optimize_systematic_lens_system(max_lenses)
+                if results:
+                    self.last_optimization_results = results
+                    self._on_multi_optimization_finished(results)
+                    QMessageBox.information(None, "Systematic Optimization", 
+                                          f"Found {len(results)} unique solutions from systematic search.")
+                else:
+                    QMessageBox.warning(None, "Systematic Optimization", "No valid solutions found.")
+            except Exception as e:
+                QMessageBox.critical(None, "Optimization Error", f"Error during systematic optimization: {str(e)}")
+        
+        return None  # Async wie die normale Optimierung

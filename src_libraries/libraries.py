@@ -246,12 +246,6 @@ class Libraries(QObject):
                 self.ui_library.listView_libraries.setCurrentIndex(model.index(row, 0))
                 break
 
-        QMessageBox.information(
-            self.library_window,
-            "Success",
-            f"New library file '{new_file_name}' created successfully."
-        )
-
     def delete_library(self):
         """
         Deletes the currently selected library after user confirmation.
@@ -289,17 +283,6 @@ class Libraries(QObject):
                 if path.exists(selected_file_path):
                     os.remove(selected_file_path)
                     self.load_library_files()
-                    QMessageBox.information(
-                        self.library_window,
-                        "Success",
-                        f"The library '{selected_file_name}' has been deleted."
-                    )
-                else:
-                    QMessageBox.warning(
-                        self.library_window,
-                        "File Not Found",
-                        f"The file '{selected_file_name}' does not exist."
-                    )
             except Exception as e:
                 QMessageBox.critical(
                     self.library_window,
@@ -449,39 +432,22 @@ class Libraries(QObject):
             return
 
         selected_component = library_data["components"][selected_component_index]
+        try:
+            del library_data["components"][selected_component_index]
 
-        # Confirm deletion with the user
-        reply = QMessageBox.question(
-            self.library_window,
-            "Confirm Deletion",
-            f"Are you sure you want to delete the component '{selected_component.get('name', 'Unnamed')}'?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
+            # Save the updated library file
+            with open(selected_file_path, 'w') as file:
+                json.dump(library_data, file, indent=4)
 
-        if reply == QMessageBox.Yes:
-            try:
-                # Remove the component from the library
-                del library_data["components"][selected_component_index]
+            # Reload the components in the UI
+            self.display_file_contents(self.ui_library.listView_libraries.currentIndex())
 
-                # Save the updated library file
-                with open(selected_file_path, 'w') as file:
-                    json.dump(library_data, file, indent=4)
-
-                # Reload the components in the UI
-                self.display_file_contents(self.ui_library.listView_libraries.currentIndex())
-
-                QMessageBox.information(
-                    self.library_window,
-                    "Success",
-                    f"The component '{selected_component.get('name', 'Unnamed')}' has been deleted."
-                )
-            except Exception as e:
-                QMessageBox.critical(
-                    self.library_window,
-                    "Error",
-                    f"An error occurred while deleting the component: {e}"
-                )
+        except Exception as e:
+            QMessageBox.critical(
+                self.library_window,
+                "Error",
+                f"An error occurred while deleting the component: {e}"
+            )
 
     def show_component_properties(self, component_data=None):
         """

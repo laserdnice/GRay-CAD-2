@@ -186,7 +186,7 @@ class ModematcherCalculator:
             
             max_lenses=self.ui_modematcher_calculation.lensNumber.value()
             # Verwende die Parameter aus get_beam_parameters (keine UI-Parameter mehr nötig)
-            optimized_system = self.optimizer.optimize_lens_system(max_lenses=max_lenses)
+            optimized_system = self.optimizer.optimize_lens_system(max_lenses=max_lenses, method="systematic")
             
             return optimized_system
             
