@@ -1,0 +1,374 @@
+{
+    "name": "Thorlabs - Spheric 1\" A",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "SPC1X25A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.0253,
+                "Focal length sagittal": 0.0253,
+                "Radius of curvature sagittal": 0.013075000478996722,
+                "Radius of curvature tangential": 0.013075000478996722,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X30A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.029899999999999996,
+                "Focal length sagittal": 0.029899999999999996,
+                "Radius of curvature sagittal": 0.01545227329335976,
+                "Radius of curvature tangential": 0.01545227329335976,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X35A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.034899999999999994,
+                "Focal length sagittal": 0.034899999999999994,
+                "Radius of curvature sagittal": 0.018036265482884804,
+                "Radius of curvature tangential": 0.018036265482884804,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X40A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.03989999999999999,
+                "Focal length sagittal": 0.03989999999999999,
+                "Radius of curvature sagittal": 0.020620257672409846,
+                "Radius of curvature tangential": 0.020620257672409846,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X50A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.04979999999999998,
+                "Focal length sagittal": 0.04979999999999998,
+                "Radius of curvature sagittal": 0.025736562207669428,
+                "Radius of curvature tangential": 0.025736562207669428,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X60A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.05979999999999999,
+                "Focal length sagittal": 0.05979999999999999,
+                "Radius of curvature sagittal": 0.03090454658671952,
+                "Radius of curvature tangential": 0.03090454658671952,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X75A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.07479999999999998,
+                "Focal length sagittal": 0.07479999999999998,
+                "Radius of curvature sagittal": 0.03865652315529464,
+                "Radius of curvature tangential": 0.03865652315529464,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X100A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.09969999999999998,
+                "Focal length sagittal": 0.09969999999999998,
+                "Radius of curvature sagittal": 0.051524804259129364,
+                "Radius of curvature tangential": 0.051524804259129364,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X125A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.12459999999999996,
+                "Focal length sagittal": 0.12459999999999996,
+                "Radius of curvature sagittal": 0.06439308536296408,
+                "Radius of curvature tangential": 0.06439308536296408,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X150A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.14949999999999997,
+                "Focal length sagittal": 0.14949999999999997,
+                "Radius of curvature sagittal": 0.07726136646679879,
+                "Radius of curvature tangential": 0.07726136646679879,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X175A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.17439999999999997,
+                "Focal length sagittal": 0.17439999999999997,
+                "Radius of curvature sagittal": 0.09012964757063352,
+                "Radius of curvature tangential": 0.09012964757063352,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X200A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.19929999999999998,
+                "Focal length sagittal": 0.19929999999999998,
+                "Radius of curvature sagittal": 0.10299792867446823,
+                "Radius of curvature tangential": 0.10299792867446823,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X250A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.24919999999999995,
+                "Focal length sagittal": 0.24919999999999995,
+                "Radius of curvature sagittal": 0.12878617072592816,
+                "Radius of curvature tangential": 0.12878617072592816,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X300A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.29899999999999993,
+                "Focal length sagittal": 0.29899999999999993,
+                "Radius of curvature sagittal": 0.15452273293359758,
+                "Radius of curvature tangential": 0.15452273293359758,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X400A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.39869999999999994,
+                "Focal length sagittal": 0.39869999999999994,
+                "Radius of curvature sagittal": 0.20604753719272698,
+                "Radius of curvature tangential": 0.20604753719272698,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X750A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.7474999999999998,
+                "Focal length sagittal": 0.7474999999999998,
+                "Radius of curvature sagittal": 0.386306832333994,
+                "Radius of curvature tangential": 0.386306832333994,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X1000A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.9966999999999999,
+                "Focal length sagittal": 0.9966999999999999,
+                "Radius of curvature sagittal": 0.5150930030599222,
+                "Radius of curvature tangential": 0.5150930030599222,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X1500A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1.4999999999999998,
+                "Focal length sagittal": 1.4999999999999998,
+                "Radius of curvature sagittal": 0.7751976568575131,
+                "Radius of curvature tangential": 0.7751976568575131,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X2000A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 2.0,
+                "Focal length sagittal": 2.0,
+                "Radius of curvature sagittal": 1.0335968758100176,
+                "Radius of curvature tangential": 1.0335968758100176,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1X2500A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 2.5,
+                "Focal length sagittal": 2.5,
+                "Radius of curvature sagittal": 1.291996094762522,
+                "Radius of curvature tangential": 1.291996094762522,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1V50A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.05,
+                "Focal length sagittal": -0.05,
+                "Radius of curvature sagittal": -0.02583992189525044,
+                "Radius of curvature tangential": -0.02583992189525044,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1V75A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.07499999999999998,
+                "Focal length sagittal": -0.07499999999999998,
+                "Radius of curvature sagittal": -0.038759882842875654,
+                "Radius of curvature tangential": -0.038759882842875654,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC1V100A",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.1,
+                "Focal length sagittal": -0.1,
+                "Radius of curvature sagittal": -0.05167984379050088,
+                "Radius of curvature tangential": -0.05167984379050088,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}
