@@ -750,6 +750,17 @@ class Resonator(QObject):
     # - update_particle()
     # (nicht mehr benötigt)
 
+    def close_window(self):
+        try:
+            self.stop_optimization()
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "resonator_window") and self.resonator_window:
+                self.resonator_window.close()
+        except Exception:
+            pass
+
 class GAOptimizationThread(QThread):
     progress = pyqtSignal(int)
     finished = pyqtSignal(object)

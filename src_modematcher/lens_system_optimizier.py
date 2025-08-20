@@ -83,7 +83,7 @@ class OptimizationWorker(QObject):
             for gen in range(total_generations):
                 if self.abort_flag:
                     break
-                population = algorithms.varAnd(population, self.optimizer.toolbox, 0.5, 0.2)
+                population = algorithms.varAnd(population, self.optimizer.toolbox, 0.9, 0.2)
                 fits = self.optimizer.toolbox.map(self.optimizer.toolbox.evaluate, population)
                 for fit, ind in zip(fits, population):
                     ind.fitness.values = fit
@@ -527,10 +527,9 @@ class LensSystemOptimizer:
         """Berechne Fitness für ein gegebenes Individuum"""
         # Berechne resultierende Strahlparameter
         w0_sag, w0_tan, focus_pos_sag, focus_pos_tan = self.calculate_beam_parameters(individual)
-
         # Berechne Abweichung von Zielparametern (jetzt auf w0!)
-        rel_waist_error_sag = abs(self.waist_goal_sag - w0_sag)/(abs(self.waist_goal_sag) + abs(w0_sag))
-        rel_waist_error_tan = abs(self.waist_goal_tan - w0_tan)/(abs(self.waist_goal_tan) + abs(w0_tan))
+        rel_waist_error_sag = abs(self.waist_goal_sag - w0_sag)/(abs(self.waist_goal_sag))
+        rel_waist_error_tan = abs(self.waist_goal_tan - w0_tan)/(abs(self.waist_goal_tan))
         
         fitness_waist = rel_waist_error_sag + rel_waist_error_tan
 
@@ -538,8 +537,8 @@ class LensSystemOptimizer:
         target_pos_sag = self.distance + self.waist_position_goal_sag
         target_pos_tan = self.distance + self.waist_position_goal_tan
 
-        rel_pos_error_sag = abs(target_pos_sag - focus_pos_sag)/(abs(target_pos_sag) + abs(focus_pos_sag))
-        rel_pos_error_tan = abs(target_pos_tan - focus_pos_tan)/(abs(target_pos_tan) + abs(focus_pos_tan))
+        rel_pos_error_sag = abs(target_pos_sag - focus_pos_sag)/(abs(target_pos_sag))
+        rel_pos_error_tan = abs(target_pos_tan - focus_pos_tan)/(abs(target_pos_tan))
 
         fitness_position = rel_pos_error_sag + rel_pos_error_tan
 
@@ -553,7 +552,7 @@ class LensSystemOptimizer:
 
         return (fitness,)
     
-    def optimize_lens_system(self, max_lenses, num_runs=70):
+    def optimize_lens_system(self, max_lenses, num_runs=100):
         """Startet die Multi-Run-Optimierung in einem separaten Thread"""
         self.get_beam_parameters()
         self._load_lens_library_from_temp_file()

@@ -426,13 +426,87 @@ class MainWindow(QMainWindow, PropertiesHandler):
         self._previous_setup_index = fallback_idx
 
     def closeEvent(self, event):
+        """
+        Schliesst alle Nebenfenster sauber, stoppt laufende Optimierungen und ruft dann die Basis-Implementierung auf.
+        """
+        # 1. Laufende Resonator-Optimierung stoppen
+        try:
+            if hasattr(self, "res") and hasattr(self.res, "stop_optimization"):
+                self.res.stop_optimization()
+        except Exception:
+            pass
+
+        # 2. Resonator-Fenster schließen
+        try:
+            if hasattr(self, "res") and hasattr(self.res, "resonator_window") and self.res.resonator_window:
+                self.res.resonator_window.close()
+        except Exception:
+            pass
+
+        # 3. Modematcher Fenster (Parameter, Calculator, Optimizer GUI)
+        try:
+            if hasattr(self, "modematcher"):
+                mm = self.modematcher
+                for attr in ["modematcher_window", "calculator_window", "optimizer_window"]:
+                    if hasattr(mm, attr):
+                        w = getattr(mm, attr)
+                        if w:
+                            w.close()
+        except Exception:
+            pass
+
+        # 4. Bibliothek / Auswahlfenster
+        try:
+            if hasattr(self, "lib") and hasattr(self.lib, "library_window") and self.lib.library_window:
+                self.lib.library_window.close()
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "item_selector_res") and hasattr(self.item_selector_res, "lib_resonator_window") and self.item_selector_res.lib_resonator_window:
+                self.item_selector_res.lib_resonator_window.close()
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "item_selector_modematcher") and hasattr(self.item_selector_modematcher, "lib_resonator_window") and self.item_selector_modematcher.lib_resonator_window:
+                self.item_selector_modematcher.lib_resonator_window.close()
+        except Exception:
+            pass
+
+        # 5. Offene Dialoge (falls du CustomMessageBox nutzt – optional)
+        try:
+            for w in self.findChildren(QtWidgets.QDialog):
+                if w is not self:
+                    w.close()
+        except Exception:
+            pass
+
+        # 6. Threads / Worker abbrechen (falls weitere existieren)
+        try:
+            if hasattr(self, "_plot_worker_thread") and self._plot_worker_thread:
+                self._plot_worker_thread.quit()
+                self._plot_worker_thread.wait(200)
+        except Exception:
+            pass
+
+        # 7. Aufräumen Plot-Signale (wie vorher)
         try:
             self.setupList.model().modelReset.disconnect()
+        except Exception:
+            pass
+        try:
             self.setupList.itemChanged.disconnect()
+        except Exception:
+            pass
+        try:
             self.setupList.model().rowsInserted.disconnect()
+        except Exception:
+            pass
+        try:
             self.setupList.model().rowsRemoved.disconnect()
         except Exception:
             pass
+
+        # 8. Basis-Implementierung
         super().closeEvent(event)
     
     def on_component_clicked(self, item):
