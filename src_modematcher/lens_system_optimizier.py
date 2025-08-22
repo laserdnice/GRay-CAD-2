@@ -24,7 +24,7 @@ class OptimizationWorker(QObject):
     """Worker-Klasse für die Durchführung der Optimierung in einem separaten Thread"""
     finished = pyqtSignal(object)  # Signal mit Optimierungsergebnis
     error = pyqtSignal(str)      # Signal für Fehler
-    progress = pyqtSignal(int)   # Signal für Fortschrittsanzeige (nur aktueller Wert)
+    progress = pyqtSignal(int)   # Signal für Fortschrittsanzeige (0-100)
     
     def __init__(self, optimizer, max_lenses, num_runs=100, total_generations=30):
         super().__init__()
@@ -36,31 +36,29 @@ class OptimizationWorker(QObject):
         
     @pyqtSlot()
     def run(self):
-        """Führt die Optimierung in einem separaten Thread aus"""
+        """Führt die Multi-Run-Optimierung aus"""
         try:
             # Validiere Parameter
             if not self.optimizer.lens_library:
                 self.error.emit("No lenses in library. Please select lenses first.")
                 return
                 
-            # Stellt sicher, dass max_lenses mindestens 1 ist
             max_lenses = max(1, self.max_lenses)
             
-            # Stellt sicher, dass genügend Linsen in der Bibliothek vorhanden sind
             if len(self.optimizer.lens_library) < 1:
                 self.error.emit("Not enough lenses in library. Need at least 1 lens.")
                 return
             
-            # Führe Multi-Run Optimierung durch
+            # Führe Multi-Run-Optimierung durch
             result = self._run_multi_optimization(max_lenses, self.num_runs, self.total_generations)
             
-            # Sende Ergebnis zurück
             self.finished.emit(result)
             
         except Exception as e:
             self.error.emit(f"Error during optimization: {str(e)}")
     
     def _run_multi_optimization(self, max_lenses, num_runs, total_generations):
+        """Multi-Run-Optimierung mit korrektem Progress-Tracking"""
         results = []
         best_result = None
         best_fitness = float('inf')
@@ -70,38 +68,81 @@ class OptimizationWorker(QObject):
 
         seen_signatures = set()
 
+        # Berechne Gesamtschritte für Progress
+        total_steps = num_runs * total_generations
+        current_step = 0
+
+        # Adaptive Parameter basierend auf Linsenzahl
+        base_pop_size = 50
+        pop_size = min(100, base_pop_size + 10 * max_lenses)
+        
         for run in range(num_runs):
             if self.abort_flag:
                 break
 
-            self.progress.emit(run * total_generations)
-            pop_size = 50
-            population = self.optimizer.toolbox.population(n=pop_size)
+            # Erstelle Population mit Diversität
+            population = []
+            for _ in range(pop_size):
+                individual = self.optimizer.toolbox.individual()
+                population.append(individual)
+            
+            # Berechne initiale Fitness
+            for ind in population:
+                fitness = self.optimizer.toolbox.evaluate(ind)
+                ind.fitness.values = fitness
+            
             stats = tools.Statistics(lambda ind: ind.fitness.values)
             stats.register("avg", np.mean)
             stats.register("min", np.min)
             stats.register("max", np.max)
-            hof = tools.HallOfFame(1)
+            hof = tools.HallOfFame(3)
 
+            # Adaptive Mutationsrate
+            initial_mutation_rate = 0.3
+            final_mutation_rate = 0.05
+            
             for gen in range(total_generations):
                 if self.abort_flag:
                     break
-                population = algorithms.varAnd(population, self.optimizer.toolbox, 0.5, 0.2)
-                fits = self.optimizer.toolbox.map(self.optimizer.toolbox.evaluate, population)
-                for fit, ind in zip(fits, population):
+                
+                # Update Progress
+                current_step += 1
+                progress_percent = int((current_step / total_steps) * 100)
+                self.progress.emit(progress_percent)
+                
+                # Adaptive Parameter
+                progress_gen = gen / total_generations
+                current_mutation_rate = initial_mutation_rate * (1 - progress_gen) + final_mutation_rate * progress_gen
+                crossover_rate = 0.7 - 0.2 * progress_gen
+                
+                # Evolution mit adaptiven Parametern
+                offspring = algorithms.varAnd(population, self.optimizer.toolbox, crossover_rate, current_mutation_rate)
+                
+                # Bewerte Offspring
+                fits = self.optimizer.toolbox.map(self.optimizer.toolbox.evaluate, offspring)
+                for fit, ind in zip(fits, offspring):
                     ind.fitness.values = fit
-                population = self.optimizer.toolbox.select(population, len(population))
+                
+                # Elitismus: Behalte beste Individuen
+                combined_pop = population + offspring
+                combined_pop.sort(key=lambda x: x.fitness.values[0])
+                population = combined_pop[:pop_size]
+                
                 hof.update(population)
-                self.progress.emit(run * total_generations + gen + 1)
 
             if not self.abort_flag and hof:
-                best_individual = hof[0]
-                try:
-                    optimized_individual = self.optimizer._local_optimize(best_individual)
-                    if self.optimizer.fitness_function(optimized_individual)[0] < self.optimizer.fitness_function(best_individual)[0]:
-                        best_individual = optimized_individual
-                except Exception as e:
-                    pass
+                # Lokale Optimierung für alle Top-Kandidaten
+                best_candidates = []
+                for candidate in hof:
+                    try:
+                        optimized = self.optimizer._local_optimize(candidate)
+                        best_candidates.append(optimized)
+                    except Exception:
+                        best_candidates.append(candidate)
+                
+                # Wähle besten Kandidaten
+                best_candidates.sort(key=lambda x: x.fitness.values[0])
+                best_individual = best_candidates[0]
 
                 current_fitness = best_individual.fitness.values[0]
                 waist_sag, waist_tan, position_sag, position_tan = self.optimizer.calculate_beam_parameters(best_individual)
@@ -109,7 +150,7 @@ class OptimizationWorker(QObject):
                 # Duplikate filtern
                 sig = self._individual_signature(best_individual)
                 if sig in seen_signatures:
-                    continue  # Skip duplicate combination
+                    continue
                 seen_signatures.add(sig)
 
                 result = {
@@ -127,7 +168,9 @@ class OptimizationWorker(QObject):
                     best_result = result
                     best_fitness = current_fitness
 
-        return results  # <--- Jetzt wird eine Liste zurückgegeben!
+        # Stelle sicher, dass Progress auf 100% steht
+        self.progress.emit(100)
+        return results
     
     def stop(self):
         """Bricht die Optimierung ab"""
@@ -220,41 +263,6 @@ class LensSystemOptimizer:
 
         except Exception as e:
             QMessageBox.critical(None, "Error", f"Error loading lens library: {str(e)}")
-
-    def _transfer_setup_to_mainwindow(self, setup_components, setup_name=None):
-        """
-        Überträgt ein (persistentes) Setup an das Hauptfenster.
-        Optional mit explizitem Namen (falls MainWindow diese Variante unterstützt).
-        """
-        try:
-            app = QApplication.instance()
-            if app:
-                for widget in app.allWidgets():
-                    # Variante mit Namen bevorzugen, wenn vorhanden
-                    if setup_name and hasattr(widget, 'receive_setup_with_name') and hasattr(widget, 'setupList'):
-                        widget.receive_setup_with_name(setup_components, setup_name)
-                        return
-                    if hasattr(widget, 'receive_setup') and hasattr(widget, 'setupList'):
-                        widget.receive_setup(setup_components)
-                        return
-            raise Exception("Could not find MainWindow instance to transfer setup")
-        except Exception as e:
-            raise Exception(f"Failed to transfer setup: {e}")
-        
-    def _transfer_preview_setup_to_mainwindow(self, setup_components):
-        """
-        Sendet ein temporäres Setup (Preview) an das Hauptfenster ohne es zu speichern.
-        """
-        try:
-            app = QApplication.instance()
-            if app:
-                for widget in app.allWidgets():
-                    if hasattr(widget, 'receive_preview_setup') and hasattr(widget, 'setupList'):
-                        widget.receive_preview_setup(setup_components)
-                        return
-            raise Exception("Could not find MainWindow instance for preview transfer")
-        except Exception as e:
-            QMessageBox.critical(None, "Preview Error", f"Failed to transfer preview setup: {e}")
 
     def plot_setup(self):
         """
@@ -601,323 +609,32 @@ class LensSystemOptimizer:
         try:
             # Validierungen
             if not self.lens_library:
-                QMessageBox.warning(None, "Warning", "No lenses in library. Please select lenses first.")
-                return None
+                raise ValueError("No lenses in library. Please select lenses first.")
                 
             if len(self.lens_library) < 1:
-                QMessageBox.warning(None, "Warning", "Not enough lenses in library. Need at least 1 lens.")
-                return None
+                raise ValueError("Not enough lenses in library. Need at least 1 lens.")
             
             # Erstelle Thread und Worker-Objekt
             self.thread = QThread()
             self.worker = OptimizationWorker(self, max_lenses, num_runs)
             
-            # UI-Elemente aktualisieren
-            ui_found = False
-            
-            # Suche progressBar in der UI
-            for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-                if hasattr(self, attr_name):
-                    ui_obj = getattr(self, attr_name)
-                    if hasattr(ui_obj, 'progressBar'):
-                        # Setze progressBar in der UI
-                        total_steps = num_runs * total_generation  # 50 Generationen pro Run
-                        ui_obj.progressBar.setMinimum(0)
-                        ui_obj.progressBar.setMaximum(total_steps)
-                        ui_obj.progressBar.setValue(0)
-                        
-                        # Verbinde Worker-Fortschritt mit progressBar
-                        self.worker.progress.connect(ui_obj.progressBar.setValue)
-                        
-                        # Deaktiviere Optimize-Button falls vorhanden
-                        if hasattr(ui_obj, 'button_optimize'):
-                            ui_obj.button_optimize.setEnabled(False)
-                        
-                        ui_found = True
-                        break
-            
-            # Fallback zu QProgressDialog wenn keine UI-ProgressBar gefunden wurde
-            if not ui_found:
-                progress_dialog = QProgressDialog("Running multi-optimization...", "Cancel", 0, num_runs * 50)
-                progress_dialog.setWindowTitle("Optimization Progress")
-                progress_dialog.setMinimumDuration(0)
-                progress_dialog.setValue(0)
-                progress_dialog.setModal(True)
-                
-                # Verbinde Cancel-Button mit Abbruch-Funktion
-                progress_dialog.canceled.connect(self.worker.stop)
-                
-                # Verbinde Worker-Fortschritt mit progressDialog
-                self.worker.progress.connect(progress_dialog.setValue)
-                self.worker.finished.connect(progress_dialog.close)
-                self.worker.error.connect(progress_dialog.close)
-        
             # Verschiebe Worker in Thread
             self.worker.moveToThread(self.thread)
             
-            # Verbinde Signale und Slots
+            # Verbinde nur interne Signale
             self.thread.started.connect(self.worker.run)
-            self.worker.finished.connect(self._on_multi_optimization_finished)
-            self.worker.error.connect(self._on_optimization_error)
             self.worker.finished.connect(self.thread.quit)
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
-            self.thread.finished.connect(self._reset_ui)
             
             # Starte Thread
             self.thread.start()
             
-            # Zeige Fortschrittsdialog falls nötig
-            if not ui_found:
-                progress_dialog.exec_()
-            
-            # Wir geben kein Ergebnis zurück, da die Berechnung asynchron erfolgt
-            return None
+            # Gib Worker zurück für externe Signal-Verbindungen
+            return self.worker
             
         except Exception as e:
-            QMessageBox.critical(None, "Optimization Error", f"Error setting up optimization: {str(e)}")
-            return None
-
-    def _reset_ui(self):
-        """Setzt UI-Elemente nach der Optimierung zurück"""
-        # Suche UI-Objekt mit progressBar
-        for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-            if hasattr(self, attr_name):
-                ui_obj = getattr(self, attr_name)
-                if hasattr(ui_obj, 'progressBar'):
-                    # Setze progressBar zurück
-                    ui_obj.progressBar.setValue(0)
-                    
-                    # Aktiviere Optimize-Button falls vorhanden
-                    if hasattr(ui_obj, 'button_optimize'):
-                        ui_obj.button_optimize.setEnabled(True)
-                    
-                    break
-    
-    def _on_multi_optimization_finished(self, results):
-            """
-            Befüllt das QTableWidget tableResults mit allen Optimierungsergebnissen.
-            Zeigt jetzt sagittale UND tangentiale Werte (zweizeilig pro Zelle).
-            Klick auf eine Zeile erzeugt eine temporäre Plot-Vorschau dieses Setups.
-            """
-            if not results:
-                QMessageBox.warning(None, "Optimization Result", "No valid solution found in any run.")
-                return
-
-            self.last_optimization_results = results # Speichern für Preview
-
-            # Zielwerte
-            w0_sag_goal = self.waist_goal_sag
-            w0_tan_goal = self.waist_goal_tan
-            z0_sag_goal = self.distance + self.waist_position_goal_sag
-            z0_tan_goal = self.distance + self.waist_position_goal_tan
-
-            # UI finden
-            ui = None
-            for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-                if hasattr(self, attr_name):
-                    ui = getattr(self, attr_name)
-                    break
-
-            if ui and hasattr(ui, 'tableResults'):
-                table = ui.tableResults
-                table.clearSelection()
-                table.setSortingEnabled(False)  # Temporär aus beim Füllen
-                table.setRowCount(len(results))
-                table.setColumnCount(7)
-
-                def fmt(v): 
-                    return self.vc.convert_to_nearest_string(v)
-
-                RESULT_ROLE = Qt.UserRole + 99
-
-                for row, result in enumerate(results):
-                    waist_sag = result['waist_sag']
-                    waist_tan = result.get('waist_tan', float('nan'))
-                    position_sag = result['position_sag']
-                    position_tan = result.get('position_tan', float('nan'))
-                    fitness = result['fitness']
-                    lens_count = len(result['lenses'])
-
-                    delta_w0_sag = waist_sag - w0_sag_goal
-                    delta_w0_tan = waist_tan - w0_tan_goal
-                    delta_z0_sag = position_sag - z0_sag_goal
-                    delta_z0_tan = position_tan - z0_tan_goal
-
-                    item_fitness = NumericTableWidgetItem(f"{fitness:.3e}", fitness)
-                    item_fitness.setData(RESULT_ROLE, result)
-                    item_lenses = NumericTableWidgetItem(f"{lens_count}", lens_count)
-                    item_waist = NumericTableWidgetItem(f"{fmt(waist_sag)}\n{fmt(waist_tan)}", waist_sag)
-                    item_delta_waist = NumericTableWidgetItem(f"{fmt(delta_w0_sag)}\n{fmt(delta_w0_tan)}", abs(delta_w0_sag))
-                    item_position = NumericTableWidgetItem(f"{fmt(position_sag)}\n{fmt(position_tan)}", position_sag)
-                    item_delta_position = NumericTableWidgetItem(f"{fmt(delta_z0_sag)}\n{fmt(delta_z0_tan)}", abs(delta_z0_sag))
-
-                    item_waist.setToolTip(f"Sagittal: {waist_sag:.6g}\nTangential: {waist_tan:.6g}")
-                    item_delta_waist.setToolTip(f"ΔSag: {delta_w0_sag:.6g}\nΔTan: {delta_w0_tan:.6g}")
-                    item_position.setToolTip(f"Sagittal focus pos: {position_sag:.6g}\nTangential focus pos: {position_tan:.6g}")
-                    item_delta_position.setToolTip(f"ΔSag pos: {delta_z0_sag:.6g}\nΔTan pos: {delta_z0_tan:.6g}")
-
-                    table.setItem(row, 0, item_fitness)
-                    table.setItem(row, 1, item_lenses)
-                    table.setItem(row, 2, item_waist)
-                    table.setItem(row, 3, item_delta_waist)
-                    table.setItem(row, 4, item_position)
-                    table.setItem(row, 5, item_delta_position)
-
-                    # Checkbox-Spalte
-                    checkbox_item = QTableWidgetItem("")  # Platzhalter für Sortierung
-                    checkbox_item.setFlags(Qt.ItemIsEnabled)  # Nicht auswählbar/editierbar
-                    table.setItem(row, 6, checkbox_item)
-                    cb = QCheckBox()
-                    cb.stateChanged.connect(
-                        lambda state, chk=cb, res=result: self._on_result_checkbox_changed(state, chk, res)
-                    )
-                    table.setCellWidget(row, 6, cb)
-
-                table.setSortingEnabled(True)
-                table.sortItems(0, Qt.AscendingOrder)
-
-                # Spaltenbreiten an Header anpassen
-                header = table.horizontalHeader()
-                for col in range(table.columnCount()):
-                    # Mindestbreite ist Header-Text plus Padding
-                    header_text = table.horizontalHeaderItem(col).text() if table.horizontalHeaderItem(col) else ""
-                    font_metrics = table.fontMetrics()
-                    header_width = font_metrics.boundingRect(header_text).width() + 20
-                    
-                    # Aktuelle Breite der Spalte (nach Inhalt)
-                    table.resizeColumnToContents(col)
-                    content_width = table.columnWidth(col)
-                    
-                    # Setze Breite auf das Maximum von Header-Breite und Inhaltsbreite
-                    table.setColumnWidth(col, max(header_width, content_width))
-                
-                # Spezialfall: Checkbox-Spalte (feste Breite)
-                if table.columnCount() > 6:
-                    table.setColumnWidth(6, 60)
-
-                if not getattr(table, "_preview_connected", False):
-                    table.itemSelectionChanged.connect(self._on_table_selection_changed)
-                    table._preview_connected = True
-
-    def _on_result_checkbox_changed(self, state, checkbox, result):
-        """Verwaltet Auswahl-Liste für angehakte Resultate."""
-        if not hasattr(self, "_selected_results"):
-            self._selected_results = set()
-        if state == Qt.Checked:
-            self._selected_results.add(id(result))
-        else:
-            self._selected_results.discard(id(result))
-
-    def get_selected_results(self):
-        """Gibt die ausgewählten Result-Dicts zurück (basierend auf id-Matching)."""
-        if not hasattr(self, "_selected_results") or not hasattr(self, "last_optimization_results"):
-            return []
-        selected = []
-        selected_ids = self._selected_results
-        for r in self.last_optimization_results:
-            if id(r) in selected_ids:
-                selected.append(r)
-        return selected
-
-    def _on_table_selection_changed(self):
-        """Handler: Auswahl im Ergebnis-Table -> dazugehöriges Setup temporär plotten."""
-        try:
-            ui = None
-            for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-                if hasattr(self, attr_name):
-                    ui = getattr(self, attr_name)
-                    break
-            if not ui or not hasattr(ui, 'tableResults'):
-                return
-            table = ui.tableResults
-            selected_ranges = table.selectedRanges()
-            if not selected_ranges:
-                return
-            # Nimm erste ausgewählte Zeile
-            row = selected_ranges[0].topRow()
-            first_item = table.item(row, 0)
-            if first_item is None:
-                return
-            RESULT_ROLE = Qt.UserRole + 99
-            result = first_item.data(RESULT_ROLE)
-            if result:
-                self._preview_result(result)
-        except Exception as e:
-            # Silent fail (kein QMessageBox Spam bei schneller Auswahl)
-            pass
-
-    def _preview_result(self, result):
-        """
-        Erzeugt ein temporäres Setup für das angeklickte Optimierungsergebnis
-        (Preview) und sendet es an das Hauptfenster. Persistente Setups werden
-        nicht verändert.
-        """
-        try:
-            if not hasattr(self, 'wavelength'):
-                self.get_beam_parameters()
-
-            wavelength = self.wavelength
-            waist_sag = self.waist_input_sag
-            waist_tan = self.waist_input_tan
-            waist_pos_sag = self.waist_position_sag
-            waist_pos_tan = self.waist_position_tan
-
-            setup_components = []
-
-            setup_components.append({
-                "type": "BEAM",
-                "name": "Beam",
-                "properties": {
-                    "Wavelength": wavelength,
-                    "Waist radius sagittal": waist_sag,
-                    "Waist radius tangential": waist_tan,
-                    "Waist position sagittal": waist_pos_sag,
-                    "Waist position tangential": waist_pos_tan,
-                    "Rayleigh range sagittal": np.pi * waist_sag**2 / wavelength,
-                    "Rayleigh range tangential": np.pi * waist_tan**2 / wavelength,
-                    "IS_ROUND": False
-                }
-            })
-
-            # Linsen sortieren
-            sorted_lenses = sorted(result.get('lenses', []), key=lambda x: x[1])
-            last_position = 0.0
-
-            for lens, position in sorted_lenses:
-                distance = position - last_position
-                if distance > 0:
-                    setup_components.append({
-                        "type": "PROPAGATION",
-                        "name": f"Propagation {last_position:.3f}m to {position:.3f}m",
-                        "properties": {
-                            "Length": distance,
-                            "Refractive index": 1.0
-                        }
-                    })
-                setup_components.append(dict(lens))
-                last_position = position
-
-            final_distance = self.distance - last_position
-            if final_distance > 0:
-                setup_components.append({
-                    "type": "PROPAGATION",
-                    "name": f"Propagation {last_position:.3f}m to {self.distance:.3f}m",
-                    "properties": {
-                        "Length": final_distance,
-                        "Refractive index": 1.0
-                    }
-                })
-
-            # NEU: Preview-Transfer (nicht persistent)
-            self._transfer_preview_setup_to_mainwindow(setup_components)
-            self._current_preview_result = result
-        except Exception as e:
-            QMessageBox.critical(None, "Preview Error", f"Failed to preview setup: {str(e)}")
-
-    def _on_optimization_error(self, error_message):
-        """Wird aufgerufen, wenn ein Fehler während der Optimierung auftritt"""
-        QMessageBox.critical(None, "Optimization Error", error_message)
+            raise Exception(f"Error setting up optimization: {str(e)}")
     
     def _local_optimize(self, best_individual):
         """Führt eine lokale Optimierung der Linsenpositionen durch"""
@@ -942,7 +659,7 @@ class LensSystemOptimizer:
             initial_positions,
             method='L-BFGS-B',
             bounds=bounds,
-            options={'maxiter': 150, 'disp': False}
+            options={'maxiter': 100, 'disp': False}
         )
         
         # Erstelle optimiertes Individuum als neue Liste
@@ -977,78 +694,3 @@ class LensSystemOptimizer:
         except Exception as e:
             # QMessageBox braucht als erstes Argument ein QWidget oder None!
             QMessageBox.critical(None, "Error", "Error stopping optimization: " + str(e))
-
-    def _build_setup_components_from_result(self, result):
-        """
-        Baut eine Komponentenliste (persistentes Setup) aus einem Optimierungsergebnis.
-        """
-        if not hasattr(self, 'wavelength'):
-            self.get_beam_parameters()
-
-        wavelength = self.wavelength
-        waist_sag = self.waist_input_sag
-        waist_tan = self.waist_input_tan
-        waist_pos_sag = self.waist_position_sag
-        waist_pos_tan = self.waist_position_tan
-
-        components = [{
-            "type": "BEAM",
-            "name": "Beam",
-            "properties": {
-                "Wavelength": wavelength,
-                "Waist radius sagittal": waist_sag,
-                "Waist radius tangential": waist_tan,
-                "Waist position sagittal": waist_pos_sag,
-                "Waist position tangential": waist_pos_tan,
-                "Rayleigh range sagittal": np.pi * waist_sag**2 / wavelength,
-                "Rayleigh range tangential": np.pi * waist_tan**2 / wavelength,
-                "IS_ROUND": False
-            }
-        }]
-
-        sorted_lenses = sorted(result.get('lenses', []), key=lambda x: x[1])
-        last_position = 0.0
-
-        for lens, position in sorted_lenses:
-            distance = position - last_position
-            if distance > 0:
-                components.append({
-                    "type": "PROPAGATION",
-                    "name": f"Propagation {last_position:.3f}m to {position:.3f}m",
-                    "properties": {
-                        "Length": distance,
-                        "Refractive index": 1.0
-                    }
-                })
-            components.append(dict(lens))
-            last_position = position
-
-        final_distance = self.distance - last_position
-        if final_distance > 0:
-            components.append({
-                "type": "PROPAGATION",
-                "name": f"Propagation {last_position:.3f}m to {self.distance:.3f}m",
-                "properties": {
-                    "Length": final_distance,
-                    "Refractive index": 1.0
-                }
-            })
-        return components
-
-    def create_selected_setups(self):
-        """
-        Erstellt für alle per Checkbox ausgewählten Ergebnisse persistente Setups im MainWindow.
-        """
-        try:
-            selected = self.get_selected_results()
-            if not selected:
-                QMessageBox.information(None, "Create Setups", "No results selected.")
-                return
-            for idx, res in enumerate(selected, start=1):
-                comps = self._build_setup_components_from_result(res)
-                fit = res.get('fitness', 0.0)
-                name = f"OptResult {idx} (fit {fit:.2e})"
-                self._transfer_setup_to_mainwindow(comps, setup_name=name)
-            QMessageBox.information(None, "Create Setups", f"Created {len(selected)} setup(s).")
-        except Exception as e:
-            QMessageBox.critical(None, "Error", f"Error creating setups: {e}")
