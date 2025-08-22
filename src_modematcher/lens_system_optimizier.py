@@ -44,6 +44,49 @@ def optimize_single_combination(combination_data):
         waist_position_goal_tan = optimizer_params['waist_position_goal_tan']
         weight = optimizer_params.get('weight', 0.5)
         
+        def get_lens_focal_lengths_standalone(lens, wavelength):
+            """Standalone-Version der Brennweiten-Berechnung - IDENTISCH zur Klassen-Methode"""
+            
+            material = Material()
+            properties = lens.get('properties', {})
+            design_wavelength = properties.get('Design wavelength')
+            lens_material = properties.get('Lens material')
+            
+            try:
+                n_design = material.get_n(lens_material, design_wavelength)
+                n = material.get_n(lens_material, wavelength)
+                f_design_sag = properties.get('Focal length sagittal')
+                f_design_tan = properties.get('Focal length tangential')
+                
+                # WICHTIG: Wellenlängen-Korrektur!
+                f_sag = ((n_design-1)/(n-1)) * f_design_sag if f_design_sag is not None else None
+                f_tan = ((n_design-1)/(n-1)) * f_design_tan if f_design_tan is not None else None
+            except:
+                # Fallback ohne Wellenlängen-Korrektur
+                f_sag = properties.get('Focal length sagittal')
+                f_tan = properties.get('Focal length tangential')
+
+            # Fallback: Wenn nur eine Brennweite existiert, beide gleich setzen
+            if f_sag is None and f_tan is not None:
+                f_sag = f_tan
+            if f_tan is None and f_sag is not None:
+                f_tan = f_sag
+
+            # Konvertiere zu float, falls möglich
+            try:
+                f_sag = float(f_sag) if f_sag is not None else None
+                f_tan = float(f_tan) if f_tan is not None else None
+            except (ValueError, TypeError):
+                f_sag = f_tan = None
+
+            # Prüfe auf unendliche oder sehr große Werte
+            if f_sag is not None and (f_sag > 1e20 or f_sag == float('inf')):
+                f_sag = float('inf')
+            if f_tan is not None and (f_tan > 1e20 or f_tan == float('inf')):
+                f_tan = float('inf')
+
+            return f_sag, f_tan
+        
         def distances_to_positions_and_order(distances):
             """
             Konvertiert Abstände zu absoluten Positionen und bestimmt die Reihenfolge.
@@ -76,10 +119,8 @@ def optimize_single_combination(combination_data):
         def calculate_beam_parameters_standalone(distances, lens_combination, optimizer_params):
             """Standalone-Version der Strahlberechnung mit automatischer Permutation"""
             from src_physics.beam import Beam
-            from src_physics.material import Material
             
             beam = Beam()
-            material = Material()
             
             # Parameter aus optimizer_params
             wavelength = optimizer_params['wavelength']
@@ -117,27 +158,8 @@ def optimize_single_combination(combination_data):
                     # Das sollte nach der Sortierung nicht passieren
                     return float('inf'), float('inf'), float('nan'), float('nan')
                 
-                # Extrahiere Brennweiten
-                properties = lens.get('properties', {})
-                design_wavelength = properties.get('Design wavelength')
-                lens_material = properties.get('Lens material')
-                
-                try:
-                    n_design = material.get_n(lens_material, design_wavelength)
-                    n_current = material.get_n(lens_material, wavelength)
-                    f_design_sag = properties.get('Focal length sagittal')
-                    f_design_tan = properties.get('Focal length tangential')
-                    f_sag = ((n_design-1)/(n_current-1)) * f_design_sag
-                    f_tan = ((n_design-1)/(n_current-1)) * f_design_tan
-                except:
-                    f_sag = properties.get('Focal length sagittal')
-                    f_tan = properties.get('Focal length tangential')
-                
-                # Fallback: Wenn nur eine Brennweite existiert
-                if f_sag is None and f_tan is not None:
-                    f_sag = f_tan
-                if f_tan is None and f_sag is not None:
-                    f_tan = f_sag
+                # WICHTIG: Verwende die korrekte Brennweiten-Berechnung!
+                f_sag, f_tan = get_lens_focal_lengths_standalone(lens, wavelength)
                 
                 # Linseneffekt hinzufügen
                 if f_sag is not None and f_sag != float('inf') and f_sag != 0:
