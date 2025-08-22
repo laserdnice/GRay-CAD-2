@@ -5,6 +5,7 @@ from src_modematcher.lens_system_optimizier import LensSystemOptimizer
 from src_physics.matrices import Matrices
 import config
 from PyQt5.QtWidgets import QMessageBox
+import numpy as np
 
 class ModematcherCalculationWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -300,18 +301,31 @@ class ModematcherCalculator:
 
     def _on_optimization_finished(self, results):
         """
-        Befüllt das QTableWidget tableResults mit allen Optimierungsergebnissen.
+        Befüllt das QTableWidget tableResults mit den 100 besten Optimierungsergebnissen.
         Zeigt jetzt sagittale UND tangentiale Werte (zweizeilig pro Zelle).
         Klick auf eine Zeile erzeugt eine temporäre Plot-Vorschau dieses Setups.
         """
-        if not results:
+        
+        if not results or len(results) == 0:
             QMessageBox.warning(
                 self.modematcher_calculation_window, 
                 "Optimization Result", 
-                "No valid solution found in any run."
+                "No valid solution found in any run. This could be due to:\n"
+                "- No suitable lens combinations\n"
+                "- Target parameters are impossible to achieve\n"
+                "- Optimization constraints are too strict\n\n"
+                "Try:\n"
+                "- Selecting more/different lenses\n"
+                "- Relaxing target parameters\n"
+                "- Increasing maximum number of lenses"
             )
             return
-
+        
+        # Begrenze auf die 100 besten Ergebnisse
+        MAX_RESULTS = 100
+        original_count = len(results)
+        results = results[:MAX_RESULTS]  # Nehme nur die ersten (besten) 100
+        
         self.last_optimization_results = results  # Speichern für Preview
         self._selected_results = set()  # Reset selection
 
@@ -329,58 +343,71 @@ class ModematcherCalculator:
             table.setRowCount(len(results))
             table.setColumnCount(7)
 
+            # Header setzen falls noch nicht vorhanden
+            headers = ["Fitness", "Lenses", "Waist [m]", "ΔWaist [m]", "Position [m]", "ΔPosition [m]", "Select"]
+            for col, header in enumerate(headers):
+                if not table.horizontalHeaderItem(col):
+                    table.setHorizontalHeaderItem(col, QTableWidgetItem(header))
+
             def fmt(v): 
                 return self.optimizer.vc.convert_to_nearest_string(v)
 
             from src_modematcher.lens_system_optimizier import NumericTableWidgetItem
-            from PyQt5.QtWidgets import QCheckBox
+            from PyQt5.QtWidgets import QCheckBox, QTableWidgetItem
             from PyQt5.QtCore import Qt
 
             RESULT_ROLE = Qt.UserRole + 99
 
             for row, result in enumerate(results):
-                waist_sag = result['waist_sag']
-                waist_tan = result.get('waist_tan', float('nan'))
-                position_sag = result['position_sag']
-                position_tan = result.get('position_tan', float('nan'))
-                fitness = result['fitness']
-                lens_count = len(result['lenses'])
+                try:
+                    waist_sag = result.get('waist_sag', float('nan'))
+                    waist_tan = result.get('waist_tan', float('nan'))
+                    position_sag = result.get('position_sag', float('nan'))
+                    position_tan = result.get('position_tan', float('nan'))
+                    fitness = result.get('fitness', float('inf'))
+                    lens_count = len(result.get('lenses', []))
 
-                delta_w0_sag = waist_sag - w0_sag_goal
-                delta_w0_tan = waist_tan - w0_tan_goal
-                delta_z0_sag = position_sag - z0_sag_goal
-                delta_z0_tan = position_tan - z0_tan_goal
+                    # Prüfe auf gültige Werte
+                    if np.isnan(waist_sag) or np.isnan(waist_tan):
+                        continue
 
-                item_fitness = NumericTableWidgetItem(f"{fitness:.3e}", fitness)
-                item_fitness.setData(RESULT_ROLE, result)
-                item_lenses = NumericTableWidgetItem(f"{lens_count}", lens_count)
-                item_waist = NumericTableWidgetItem(f"{fmt(waist_sag)}\n{fmt(waist_tan)}", waist_sag)
-                item_delta_waist = NumericTableWidgetItem(f"{fmt(delta_w0_sag)}\n{fmt(delta_w0_tan)}", abs(delta_w0_sag))
-                item_position = NumericTableWidgetItem(f"{fmt(position_sag)}\n{fmt(position_tan)}", position_sag)
-                item_delta_position = NumericTableWidgetItem(f"{fmt(delta_z0_sag)}\n{fmt(delta_z0_tan)}", abs(delta_z0_sag))
+                    delta_w0_sag = waist_sag - w0_sag_goal
+                    delta_w0_tan = waist_tan - w0_tan_goal
+                    delta_z0_sag = position_sag - z0_sag_goal
+                    delta_z0_tan = position_tan - z0_tan_goal
 
-                item_waist.setToolTip(f"Sagittal: {waist_sag:.6g}\nTangential: {waist_tan:.6g}")
-                item_delta_waist.setToolTip(f"ΔSag: {delta_w0_sag:.6g}\nΔTan: {delta_w0_tan:.6g}")
-                item_position.setToolTip(f"Sagittal focus pos: {position_sag:.6g}\nTangential focus pos: {position_tan:.6g}")
-                item_delta_position.setToolTip(f"ΔSag pos: {delta_z0_sag:.6g}\nΔTan pos: {delta_z0_tan:.6g}")
+                    item_fitness = NumericTableWidgetItem(f"{fitness:.3e}", fitness)
+                    item_fitness.setData(RESULT_ROLE, result)
+                    item_lenses = NumericTableWidgetItem(f"{lens_count}", lens_count)
+                    item_waist = NumericTableWidgetItem(f"{fmt(waist_sag)}\n{fmt(waist_tan)}", waist_sag)
+                    item_delta_waist = NumericTableWidgetItem(f"{fmt(delta_w0_sag)}\n{fmt(delta_w0_tan)}", abs(delta_w0_sag))
+                    item_position = NumericTableWidgetItem(f"{fmt(position_sag)}\n{fmt(position_tan)}", position_sag)
+                    item_delta_position = NumericTableWidgetItem(f"{fmt(delta_z0_sag)}\n{fmt(delta_z0_tan)}", abs(delta_z0_sag))
 
-                table.setItem(row, 0, item_fitness)
-                table.setItem(row, 1, item_lenses)
-                table.setItem(row, 2, item_waist)
-                table.setItem(row, 3, item_delta_waist)
-                table.setItem(row, 4, item_position)
-                table.setItem(row, 5, item_delta_position)
+                    item_waist.setToolTip(f"Sagittal: {waist_sag:.6g}\nTangential: {waist_tan:.6g}")
+                    item_delta_waist.setToolTip(f"ΔSag: {delta_w0_sag:.6g}\nΔTan: {delta_w0_tan:.6g}")
+                    item_position.setToolTip(f"Sagittal focus pos: {position_sag:.6g}\nTangential focus pos: {position_tan:.6g}")
+                    item_delta_position.setToolTip(f"ΔSag pos: {delta_z0_sag:.6g}\nΔTan pos: {delta_z0_tan:.6g}")
 
-                # Checkbox-Spalte
-                from PyQt5.QtWidgets import QTableWidgetItem
-                checkbox_item = QTableWidgetItem("")  # Platzhalter für Sortierung
-                checkbox_item.setFlags(Qt.ItemIsEnabled)  # Nicht auswählbar/editierbar
-                table.setItem(row, 6, checkbox_item)
-                cb = QCheckBox()
-                cb.stateChanged.connect(
-                    lambda state, chk=cb, res=result: self._on_result_checkbox_changed(state, chk, res)
-                )
-                table.setCellWidget(row, 6, cb)
+                    table.setItem(row, 0, item_fitness)
+                    table.setItem(row, 1, item_lenses)
+                    table.setItem(row, 2, item_waist)
+                    table.setItem(row, 3, item_delta_waist)
+                    table.setItem(row, 4, item_position)
+                    table.setItem(row, 5, item_delta_position)
+
+                    # Checkbox-Spalte
+                    checkbox_item = QTableWidgetItem("")  # Platzhalter für Sortierung
+                    checkbox_item.setFlags(Qt.ItemIsEnabled)  # Nicht auswählbar/editierbar
+                    table.setItem(row, 6, checkbox_item)
+                    cb = QCheckBox()
+                    cb.stateChanged.connect(
+                        lambda state, chk=cb, res=result: self._on_result_checkbox_changed(state, chk, res)
+                    )
+                    table.setCellWidget(row, 6, cb)
+
+                except Exception as e:
+                    continue
 
             table.setSortingEnabled(True)
             table.sortItems(0, Qt.AscendingOrder)
@@ -407,6 +434,9 @@ class ModematcherCalculator:
             if not getattr(table, "_preview_connected", False):
                 table.itemSelectionChanged.connect(self._on_table_selection_changed)
                 table._preview_connected = True
+
+        else:
+            QMessageBox.warning(self.modematcher_calculation_window, "Warning", "tableResults not found in UI")
 
     def _reset_ui(self):
         """Setzt UI-Elemente nach der Optimierung zurück"""
