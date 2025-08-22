@@ -46,8 +46,9 @@ def optimize_single_combination(combination_data):
         
         def get_lens_focal_lengths_standalone(lens, wavelength):
             """Standalone-Version der Brennweiten-Berechnung - IDENTISCH zur Klassen-Methode"""
+            from src_physics.material import Material
             
-            material = Material()
+            material = Material
             properties = lens.get('properties', {})
             design_wavelength = properties.get('Design wavelength')
             lens_material = properties.get('Lens material')
@@ -62,22 +63,7 @@ def optimize_single_combination(combination_data):
                 f_sag = ((n_design-1)/(n-1)) * f_design_sag if f_design_sag is not None else None
                 f_tan = ((n_design-1)/(n-1)) * f_design_tan if f_design_tan is not None else None
             except:
-                # Fallback ohne Wellenlängen-Korrektur
-                f_sag = properties.get('Focal length sagittal')
-                f_tan = properties.get('Focal length tangential')
-
-            # Fallback: Wenn nur eine Brennweite existiert, beide gleich setzen
-            if f_sag is None and f_tan is not None:
-                f_sag = f_tan
-            if f_tan is None and f_sag is not None:
-                f_tan = f_sag
-
-            # Konvertiere zu float, falls möglich
-            try:
-                f_sag = float(f_sag) if f_sag is not None else None
-                f_tan = float(f_tan) if f_tan is not None else None
-            except (ValueError, TypeError):
-                f_sag = f_tan = None
+                QMessageBox.critical(None, "Error", "Failed to calculate lens focal lengths.")
 
             # Prüfe auf unendliche oder sehr große Werte
             if f_sag is not None and (f_sag > 1e20 or f_sag == float('inf')):
@@ -281,7 +267,7 @@ def optimize_single_combination(combination_data):
                     initial_distances,
                     bounds=bounds,
                     method='trf',
-                    max_nfev=500,
+                    max_nfev=100,
                     ftol=1e-12,
                     xtol=1e-12,
                     gtol=1e-12
