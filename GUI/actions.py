@@ -189,7 +189,7 @@ class Action:
         QMessageBox.information(
             parent, 
             "About", 
-            "GRay-CAD 2\nVersion 0.1 the forever development release\nDeveloped by Jens Gumm, TU Darmstadt, LQO-Group"
+            "GRay-CAD 2\n\nVersion 0.1 the forever development release\n\nDeveloped by Jens Gumm, TU Darmstadt, LQO-Group"
         )
 
     def action_tips_and_tricks(self, parent):
@@ -203,12 +203,12 @@ class Action:
         msg.setTextInteractionFlags(Qt.TextBrowserInteraction)
         msg.setIcon(QMessageBox.Information)
         msg.setText(
-            "1. Use the Edit/Library to manage your components.<br>"
-            "2. You can drag and drop components into the setup list.<br>"
-            "3. If you dont type a unit, it will be interpreted as meters.<br>"
-            "4. Take advantage of the simulation features like the Modematcher and the Cavity Designer.<br>"
-            "5. Don't forget to save your work!<br>"
-            '6. Report bugs on GitHub: <a href="https://github.com/NiceLaserGuy/GRay-CAD-2">https://github.com/NiceLaserGuy/GRay-CAD-2</a>'
+            '1. Report bugs on GitHub: <a href="https://github.com/NiceLaserGuy/GRay-CAD-2">https://github.com/NiceLaserGuy/GRay-CAD-2 </a><br><br>'
+            "2. Don't forget to save your work! This can be done in 'Files/Save (as)'<br><br>"
+            "3. Use Edit/Library to manage your components.<br><br>"
+            "3. Use units! If you dont type a unit, it will be interpreted as meters.<br><br>"
+            '4. Take advantage of the simulation features like the Modematcher and the Cavity Designer.'
+            
         )
         msg.exec()
 
