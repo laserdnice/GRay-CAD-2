@@ -1,0 +1,262 @@
+{
+    "name": "Thorlabs UFSL A coating",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "30mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.029999999999999995,
+                "Focal length sagittal": 0.029999999999999995,
+                "Radius of curvature sagittal": 0.027507740523194442,
+                "Radius of curvature tangential": 0.027507740523194442,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "35mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.03509999999999999,
+                "Focal length sagittal": 0.03509999999999999,
+                "Radius of curvature sagittal": 0.03218405641213749,
+                "Radius of curvature tangential": 0.03218405641213749,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "40mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.0401,
+                "Focal length sagittal": 0.0401,
+                "Radius of curvature sagittal": 0.036768679832669904,
+                "Radius of curvature tangential": 0.036768679832669904,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.05009999999999999,
+                "Focal length sagittal": 0.05009999999999999,
+                "Radius of curvature sagittal": 0.04593792667373472,
+                "Radius of curvature tangential": 0.04593792667373472,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "60mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.05999999999999999,
+                "Focal length sagittal": 0.05999999999999999,
+                "Radius of curvature sagittal": 0.055015481046388884,
+                "Radius of curvature tangential": 0.055015481046388884,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "125mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.12539999999999998,
+                "Focal length sagittal": 0.12539999999999998,
+                "Radius of curvature sagittal": 0.11498235538695277,
+                "Radius of curvature tangential": 0.11498235538695277,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "150mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.15049999999999997,
+                "Focal length sagittal": 0.15049999999999997,
+                "Radius of curvature sagittal": 0.13799716495802544,
+                "Radius of curvature tangential": 0.13799716495802544,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "175mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.17559999999999998,
+                "Focal length sagittal": 0.17559999999999998,
+                "Radius of curvature sagittal": 0.16101197452909813,
+                "Radius of curvature tangential": 0.16101197452909813,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "200mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.2007,
+                "Focal length sagittal": 0.2007,
+                "Radius of curvature sagittal": 0.18402678410017084,
+                "Radius of curvature tangential": 0.18402678410017084,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "250mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.25089999999999996,
+                "Focal length sagittal": 0.25089999999999996,
+                "Radius of curvature sagittal": 0.2300564032423162,
+                "Radius of curvature tangential": 0.2300564032423162,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "300mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.3011,
+                "Focal length sagittal": 0.3011,
+                "Radius of curvature sagittal": 0.27608602238446156,
+                "Radius of curvature tangential": 0.27608602238446156,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-30mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.029999999999999995,
+                "Focal length sagittal": -0.029999999999999995,
+                "Radius of curvature sagittal": -0.027507740523194442,
+                "Radius of curvature tangential": -0.027507740523194442,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.07529999999999998,
+                "Focal length sagittal": 0.07529999999999998,
+                "Radius of curvature sagittal": 0.06904442871321805,
+                "Radius of curvature tangential": 0.06904442871321805,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.07499999999999998,
+                "Focal length sagittal": -0.07499999999999998,
+                "Radius of curvature sagittal": -0.0687693513079861,
+                "Radius of curvature tangential": -0.0687693513079861,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "100mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.10029999999999999,
+                "Focal length sagittal": 0.10029999999999999,
+                "Radius of curvature sagittal": 0.09196754581588008,
+                "Radius of curvature tangential": 0.09196754581588008,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-100mm",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.09999999999999999,
+                "Focal length sagittal": -0.09999999999999999,
+                "Radius of curvature sagittal": -0.09169246841064814,
+                "Radius of curvature tangential": -0.09169246841064814,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

@@ -1,0 +1,166 @@
+{
+    "name": "Linsenkit UV",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "SPX025",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.14999999999999997,
+                "Focal length sagittal": 0.14999999999999997,
+                "Radius of curvature sagittal": 0.1463378926673336,
+                "Radius of curvature tangential": 0.1463378926673336,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPX034",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.9999999999999999,
+                "Focal length sagittal": 0.9999999999999999,
+                "Radius of curvature sagittal": 0.9755859511155575,
+                "Radius of curvature tangential": 0.9755859511155575,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPX031",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.49999999999999994,
+                "Focal length sagittal": 0.49999999999999994,
+                "Radius of curvature sagittal": 0.48779297555777873,
+                "Radius of curvature tangential": 0.48779297555777873,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPX028",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.19999999999999998,
+                "Focal length sagittal": 0.19999999999999998,
+                "Radius of curvature sagittal": 0.1951171902231115,
+                "Radius of curvature tangential": 0.1951171902231115,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPX022",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.1,
+                "Focal length sagittal": 0.1,
+                "Radius of curvature sagittal": 0.09755859511155576,
+                "Radius of curvature tangential": 0.09755859511155576,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC016",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -1.0,
+                "Focal length sagittal": -1.0,
+                "Radius of curvature sagittal": -0.9755859511155576,
+                "Radius of curvature tangential": -0.9755859511155576,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC019",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.24999999999999994,
+                "Focal length sagittal": -0.24999999999999994,
+                "Radius of curvature sagittal": -0.24389648777888934,
+                "Radius of curvature tangential": -0.24389648777888934,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC025",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.14999999999999997,
+                "Focal length sagittal": -0.14999999999999997,
+                "Radius of curvature sagittal": -0.1463378926673336,
+                "Radius of curvature tangential": -0.1463378926673336,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC022",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.2,
+                "Focal length sagittal": -0.2,
+                "Radius of curvature sagittal": -0.19511719022311153,
+                "Radius of curvature tangential": -0.19511719022311153,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "SPC028",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.1,
+                "Focal length sagittal": -0.1,
+                "Radius of curvature sagittal": -0.09755859511155576,
+                "Radius of curvature tangential": -0.09755859511155576,
+                "Design wavelength": 3e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

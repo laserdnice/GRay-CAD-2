@@ -1,0 +1,310 @@
+{
+    "name": "UFVS Linsen",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "75S",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.06824999999999998,
+                "Radius of curvature sagittal": 0.06899907800610557,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 2.536999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50T",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.04535999999999999,
+                "Focal length sagittal": 1e30,
+                "Radius of curvature sagittal": 1e30,
+                "Radius of curvature tangential": 0.04585784876713478,
+                "Design wavelength": 2.5369999999999995e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "150",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.13649999999999998,
+                "Focal length sagittal": 0.13649999999999998,
+                "Radius of curvature sagittal": 0.1999750252523757,
+                "Radius of curvature tangential": 0.1999750252523757,
+                "Design wavelength": 0.2536999999999999,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "30S",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.027299999999999998,
+                "Radius of curvature sagittal": 0.027599631202442233,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 2.536999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "30T",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.027299999999999998,
+                "Focal length sagittal": 1e30,
+                "Radius of curvature sagittal": 1e30,
+                "Radius of curvature tangential": 0.027599631202442233,
+                "Design wavelength": 2.5369999999999995e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "25S",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.022749999999999992,
+                "Radius of curvature sagittal": 0.022999692668701853,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 2.5369999999999995e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50S",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.045359999999999984,
+                "Radius of curvature sagittal": 0.04585784876713477,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 2.536999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-25S",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.022749999999999996,
+                "Radius of curvature sagittal": -0.03332917087539595,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 0.2536999999999999,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-25T",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.022749999999999992,
+                "Focal length sagittal": 1e30,
+                "Radius of curvature sagittal": 1e30,
+                "Radius of curvature tangential": -0.022999692668701853,
+                "Design wavelength": 2.5369999999999995e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75T",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.06824999999999998,
+                "Focal length sagittal": 1e30,
+                "Radius of curvature sagittal": 1e30,
+                "Radius of curvature tangential": 0.09998751262618782,
+                "Design wavelength": 0.2536999999999999,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75S",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.06824999999999998,
+                "Radius of curvature sagittal": 0.06899907800610557,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 2.536999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75T",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.06824999999999998,
+                "Focal length sagittal": 1e30,
+                "Radius of curvature sagittal": 1e30,
+                "Radius of curvature tangential": 0.09998751262618782,
+                "Design wavelength": 0.2536999999999999,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50T",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.04535999999999999,
+                "Focal length sagittal": 1e30,
+                "Radius of curvature sagittal": 1e30,
+                "Radius of curvature tangential": 0.04585784876713478,
+                "Design wavelength": 2.5369999999999995e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50S",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.045359999999999984,
+                "Radius of curvature sagittal": 0.04585784876713477,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 2.536999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "100",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.060667477319473584,
+                "Focal length sagittal": 0.060667477319473584,
+                "Radius of curvature sagittal": 0.04599999999999999,
+                "Radius of curvature tangential": 0.04599999999999999,
+                "Design wavelength": 2.5369999999999995e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "25T",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.022749999999999992,
+                "Focal length sagittal": 1e30,
+                "Radius of curvature sagittal": 1e30,
+                "Radius of curvature tangential": 0.03332917087539594,
+                "Design wavelength": 0.2536999999999999,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "200",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.2006707892036989,
+                "Focal length sagittal": 0.2006707892036989,
+                "Radius of curvature sagittal": 0.09199999999999998,
+                "Radius of curvature tangential": 0.09199999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.04550060798960519,
+                "Focal length sagittal": 0.04550060798960519,
+                "Radius of curvature sagittal": 0.022999999999999996,
+                "Radius of curvature tangential": 0.022999999999999996,
+                "Design wavelength": 2.5369999999999995e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.0752515459513871,
+                "Focal length sagittal": 0.0752515459513871,
+                "Radius of curvature sagittal": 0.034499999999999996,
+                "Radius of curvature tangential": 0.034499999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

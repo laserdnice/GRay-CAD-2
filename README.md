@@ -1,7 +1,9 @@
 # GRay-CAD 2
 
-Under heavy development
+Release Version 0.1
 =======
-GRay-CAD 2 is a program which can plot optical setups employing ABCD matrices.
-It is also able to evaluate optical resonators (Bow-Tie, Fabry-Perot, triangle and rectangle) with an evolutionary algorithm. Especially the evaluation of elliptical eigenmodes is included, which makes GRAY-CAD 2 a powerful tool in your lab.
-Another feature is the Modematching function. It allows to match an incomming beam, described by the beam waist, the rayleigh range and the waist position, to any output beam with the same wavelength with lenses. This algorithm uses the simulated annealing algorithm to evaluate the setups.
+GRayCad is a powerful tool to simulate optical systems. It is based on the ABCD matrix formalism for gaussian beams.
+You can simulate optical systems with (thick) lenses and mirrors but also create a own ABCD matrix.
+Build in functions like the modematcher can optimize your systems. It matches a arbitary incident beam to a output beam of your choise. The algorithm used for this is the "Trust Region Reflective algorithm". After optimization you can choose one or more of the caculated setups.
+The function build resonator is based on our recent paper (https://doi.org/10.1063/5.0253513). Here we use a "Genetic Algorithm" to calculate resonators in different geometries. Implemented designs are "Bow-Tie", "Fabry-Perot", "Rectangle" and "Triangle".
+=======s

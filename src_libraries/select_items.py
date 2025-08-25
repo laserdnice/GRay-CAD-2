@@ -65,6 +65,7 @@ class ItemSelector(QObject, PropertiesHandler):
 
         # Load files from the Library folder and display them
         self.load_library_files()
+        self.temp_file_path = config.get_temp_file_path()
 
         # Connect the listView_libraries to a click event
         self.ui_select_component_window.listView_libraries.clicked.connect(self.display_file_contents)
@@ -103,6 +104,14 @@ class ItemSelector(QObject, PropertiesHandler):
 
         # Execute action based on context
         if self.parent().current_context == "resonator":
+            # Prüfe ob nur Spiegel in der Liste sind (keine Linsen)
+            if not self._validate_mirror_only_components(self.temp_file_path):
+                # Zeige Fenster wieder an, wenn Validierung fehlschlägt
+                if self.lib_resonator_window:
+                    self.lib_resonator_window.show()
+                return  # Beende Methode wenn ungültige Komponenten
+                
+            # Wenn Validierung OK, fahre fort mit Resonator-Fenster
             if not hasattr(self.res, 'resonator_window') or self.res.resonator_window is None:
                 # First time - create new window
                 self.res.open_resonator_window()
@@ -113,9 +122,10 @@ class ItemSelector(QObject, PropertiesHandler):
             # Pass reference to current window
             self.res.previous_window = self.lib_resonator_window
         elif self.parent().current_context == "modematcher":
+            # Keine Validierung für Modematcher (Linsen erlaubt)
             if not hasattr(self.parent().modematcher, 'modematcher_window') or self.parent().modematcher.modematcher_window is None:
                 self.parent().modematcher.open_modematcher_parameter_window()
-                self.parent().modematcher.previous_window = self.lib_resonator_window  # Add this line
+                self.parent().modematcher.previous_window = self.lib_resonator_window
             else:
                 self.parent().modematcher.modematcher_window.show()
                 self.parent().modematcher.modematcher_window.raise_()
@@ -125,7 +135,46 @@ class ItemSelector(QObject, PropertiesHandler):
                 "Unknown Context",
                 "No valid context recognized."
             )
-            
+    def _validate_mirror_only_components(self, temp_file_path):
+        """
+        Prüft, ob die temporäre Komponentenliste ausschließlich MIRROR-Komponenten enthält
+        (keine LENS) und genügend Spiegel für eine Resonator-Optimierung vorhanden sind.
+        """
+        try:
+            if not temp_file_path or not path.exists(temp_file_path):
+                QMessageBox.warning(None, "Validation", "No temporary component file found.")
+                return False
+            with open(temp_file_path, "r") as f:
+                data = json.load(f)
+            comps = data.get("components", [])
+            if not comps:
+                QMessageBox.warning(None, "Validation", "The component list is empty.")
+                return False
+
+            has_lens = any(c.get("type", "").upper() == "LENS" for c in comps)
+            if has_lens:
+                QMessageBox.warning(
+                    None,
+                    "Invalid Components",
+                    "Lens components detected. Resonator optimization requires ONLY mirrors.\n"
+                    "Please remove all lenses before proceeding."
+                )
+                return False
+
+            mirror_count = sum(1 for c in comps if c.get("type", "").upper() == "MIRROR")
+            if mirror_count < 1:
+                QMessageBox.warning(
+                    None,
+                    "Not Enough Mirrors",
+                    f"At least 1 mirrors are required. Found: {mirror_count}"
+                )
+                return False
+
+            return True
+        except Exception as e:
+            QMessageBox.critical(None, "Validation Error", f"Error validating components: {e}")
+            return False
+        
     def _save_current_component_properties(self):
         """
         Speichert die aktuell bearbeiteten Properties in die temporäre Liste

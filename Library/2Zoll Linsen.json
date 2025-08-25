@@ -1,0 +1,102 @@
+{
+    "name": "2Zoll Linsen",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "1000 UV",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.9999999999999999,
+                "Focal length sagittal": 0.9999999999999999,
+                "Radius of curvature sagittal": 1.0076581566644152,
+                "Radius of curvature tangential": 1.0076581566644152,
+                "Design wavelength": 2.5699999999999993e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "500 UV",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.4999999999999999,
+                "Focal length sagittal": 0.4999999999999999,
+                "Radius of curvature sagittal": 0.5038290783322076,
+                "Radius of curvature tangential": 0.5038290783322076,
+                "Design wavelength": 2.5699999999999993e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-150",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": -0.14999999999999997,
+                "Focal length sagittal": -0.14999999999999997,
+                "Radius of curvature sagittal": -0.15584177491964438,
+                "Radius of curvature tangential": -0.15584177491964438,
+                "Design wavelength": 5.319999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "300",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.29999999999999993,
+                "Focal length sagittal": 0.29999999999999993,
+                "Radius of curvature sagittal": 0.31168354983928875,
+                "Radius of curvature tangential": 0.31168354983928875,
+                "Design wavelength": 5.319999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "2000 UV",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 1.9999999999999996,
+                "Focal length sagittal": 1.9999999999999996,
+                "Radius of curvature sagittal": 2.0153163133288303,
+                "Radius of curvature tangential": 2.0153163133288303,
+                "Design wavelength": 2.5699999999999993e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "500",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.4999999999999999,
+                "Focal length sagittal": 0.4999999999999999,
+                "Radius of curvature sagittal": 0.5194725830654813,
+                "Radius of curvature tangential": 0.5194725830654813,
+                "Design wavelength": 5.319999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

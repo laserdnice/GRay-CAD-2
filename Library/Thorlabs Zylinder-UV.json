@@ -1,0 +1,294 @@
+{
+    "name": "Thorlabs Zylinder-UV",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "10.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.009998232620592977,
+                "Radius of curvature sagittal": 0.004599999999999999,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "12.7 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.012606467217269405,
+                "Radius of curvature sagittal": 0.005799999999999999,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "30.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.029994697861778937,
+                "Radius of curvature sagittal": 0.0138,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "8.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.008042056673085655,
+                "Radius of curvature sagittal": 0.0036999999999999993,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.07498674465444734,
+                "Radius of curvature sagittal": 0.034499999999999996,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-10.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.009998232620592977,
+                "Radius of curvature sagittal": -0.004599999999999999,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-12.7 mm  Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.012606467217269405,
+                "Radius of curvature sagittal": -0.005799999999999999,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-30.0 mm  Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.029994697861778937,
+                "Radius of curvature sagittal": -0.0138,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-25.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.024995581551482442,
+                "Radius of curvature sagittal": -0.011499999999999998,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-75.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.07498674465444734,
+                "Radius of curvature sagittal": -0.034499999999999996,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "25.4 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.02543028731759518,
+                "Radius of curvature sagittal": 0.011699999999999997,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50.0 mm Zyl",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.05001501300479148,
+                "Radius of curvature sagittal": 0.022929999999999996,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "100.0 mm Zyl",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 100.00821396727821,
+                "Radius of curvature sagittal": 45.849999999999994,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-8.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.008042056673085655,
+                "Radius of curvature sagittal": -0.0036999999999999997,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-25.4 mm  Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.02543028731759518,
+                "Radius of curvature sagittal": -0.011699999999999997,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-50.0 mm Zyl",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": -0.05001501300479148,
+                "Radius of curvature sagittal": -0.022929999999999996,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "25.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.024995581551482442,
+                "Radius of curvature sagittal": 0.011499999999999998,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.459999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "250.0 mm Zyl",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1e30,
+                "Focal length sagittal": 0.24999999999999997,
+                "Radius of curvature sagittal": 0.25892132394346007,
+                "Radius of curvature tangential": 1e30,
+                "Design wavelength": 5.639999999999999e-07,
+                "IS_ROUND": false,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

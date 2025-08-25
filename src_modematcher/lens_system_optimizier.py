@@ -1,12 +1,17 @@
 import numpy as np
-from deap import base, creator, tools, algorithms
-from scipy.optimize import minimize
+from scipy.optimize import least_squares
+from src_physics.beam import Beam
 import random
 import json
 import config
-from PyQt5.QtWidgets import QMessageBox, QProgressDialog, QApplication, QTableWidgetItem
+from PyQt5.QtWidgets import QMessageBox, QProgressDialog, QApplication, QTableWidgetItem, QCheckBox
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, Qt
 from src_physics.value_converter import ValueConverter
+from src_physics.material import Material
+import itertools
+import multiprocessing as mp
+from functools import partial
+import os
 
 class NumericTableWidgetItem(QTableWidgetItem):
     """QTableWidgetItem-Subklasse für korrekte numerische Sortierung"""
@@ -18,119 +23,597 @@ class NumericTableWidgetItem(QTableWidgetItem):
         # Vergleich basierend auf dem tatsächlichen numerischen Wert
         return self.data(Qt.UserRole) < other.data(Qt.UserRole)
 
+def optimize_single_combination(combination_data):
+    """
+    Standalone-Funktion für die Optimierung einer einzelnen Linsenkombination.
+    Verwendet Abstände (auch negative) als Optimierungsparameter für automatische Permutationen.
+    """
+    lens_combination, optimizer_params = combination_data
+    
+    try:
+        # Optimizer-Parameter entpacken
+        wavelength = optimizer_params['wavelength']
+        distance = optimizer_params['distance']
+        waist_input_sag = optimizer_params['waist_input_sag']
+        waist_input_tan = optimizer_params['waist_input_tan']
+        waist_position_sag = optimizer_params['waist_position_sag']
+        waist_position_tan = optimizer_params['waist_position_tan']
+        waist_goal_sag = optimizer_params['waist_goal_sag']
+        waist_goal_tan = optimizer_params['waist_goal_tan']
+        waist_position_goal_sag = optimizer_params['waist_position_goal_sag']
+        waist_position_goal_tan = optimizer_params['waist_position_goal_tan']
+        weight = optimizer_params.get('weight', 0.5)
+        
+        def get_lens_focal_lengths_standalone(lens, wavelength):
+            """Standalone-Version der Brennweiten-Berechnung - IDENTISCH zur Klassen-Methode"""
+            from src_physics.material import Material
+            
+            material = Material
+            properties = lens.get('properties', {})
+            design_wavelength = properties.get('Design wavelength')
+            lens_material = properties.get('Lens material')
+            
+            try:
+                n_design = material.get_n(lens_material, design_wavelength)
+                n = material.get_n(lens_material, wavelength)
+                f_design_sag = properties.get('Focal length sagittal')
+                f_design_tan = properties.get('Focal length tangential')
+                
+                # WICHTIG: Wellenlängen-Korrektur!
+                f_sag = ((n_design-1)/(n-1)) * f_design_sag if f_design_sag is not None else None
+                f_tan = ((n_design-1)/(n-1)) * f_design_tan if f_design_tan is not None else None
+            except:
+                QMessageBox.critical(None, "Error", "Failed to calculate lens focal lengths.")
+
+            # Prüfe auf unendliche oder sehr große Werte
+            if f_sag is not None and (f_sag > 1e20 or f_sag == float('inf')):
+                f_sag = float('inf')
+            if f_tan is not None and (f_tan > 1e20 or f_tan == float('inf')):
+                f_tan = float('inf')
+
+            return f_sag, f_tan
+        
+        def distances_to_positions_and_order(distances):
+            """
+            Konvertiert Abstände zu absoluten Positionen und bestimmt die Reihenfolge.
+            Negative Abstände bedeuten: diese Linse kommt VOR die vorherige.
+            """
+            lens_positions = []
+            current_pos = 0
+            
+            for i, (lens, dist) in enumerate(zip(lens_combination, distances)):
+                if dist >= 0:
+                    # Positive Distanz: normale Reihenfolge
+                    current_pos += dist
+                    lens_positions.append((lens, current_pos, i))
+                else:
+                    # Negative Distanz: diese Linse kommt vor die letzte Position
+                    current_pos += dist  # dist ist negativ, also wird subtrahiert
+                    if current_pos < 0:
+                        current_pos = abs(dist) * 0.1  # Mindestabstand vom Start
+                    lens_positions.append((lens, current_pos, i))
+            
+            # Sortiere nach Position (automatische Permutation!)
+            lens_positions.sort(key=lambda x: x[1])
+            
+            # Extrahiere sortierte Linsen und Positionen
+            sorted_lenses = [item[0] for item in lens_positions]
+            sorted_positions = [item[1] for item in lens_positions]
+            
+            return sorted_lenses, sorted_positions
+        
+        def calculate_beam_parameters_standalone(distances, lens_combination, optimizer_params):
+            """Standalone-Version der Strahlberechnung mit automatischer Permutation"""
+            from src_physics.beam import Beam
+            
+            beam = Beam()
+            
+            # Parameter aus optimizer_params
+            wavelength = optimizer_params['wavelength']
+            distance = optimizer_params['distance']
+            waist_position_sag = optimizer_params['waist_position_sag']
+            waist_position_tan = optimizer_params['waist_position_tan']
+            waist_input_sag = optimizer_params['waist_input_sag']
+            waist_input_tan = optimizer_params['waist_input_tan']
+            
+            n = 1.0  # Brechungsindex von Luft
+            
+            # Konvertiere Abstände zu sortierter Reihenfolge
+            sorted_lenses, sorted_positions = distances_to_positions_and_order(distances)
+            
+            # Prüfe, dass alle Positionen im erlaubten Bereich sind
+            if any(pos <= 0 or pos >= distance for pos in sorted_positions):
+                return float('inf'), float('inf'), float('nan'), float('nan')
+            
+            # Berechne q-Parameter für sagittal und tangential
+            q_sag = beam.q_value(waist_position_sag, waist_input_sag, wavelength, n)
+            q_tan = beam.q_value(waist_position_tan, waist_input_tan, wavelength, n)
+            
+            # Optisches System aufbauen mit automatisch sortierter Reihenfolge
+            last_position = 0
+            elements_sag = []
+            elements_tan = []
+            
+            for lens, position in zip(sorted_lenses, sorted_positions):
+                # Freie Propagation zur Linsenposition
+                distance_prop = position - last_position
+                if distance_prop > 0:
+                    elements_sag.append((beam.matrices.free_space, (distance_prop, n)))
+                    elements_tan.append((beam.matrices.free_space, (distance_prop, n)))
+                elif distance_prop < 0:
+                    # Das sollte nach der Sortierung nicht passieren
+                    return float('inf'), float('inf'), float('nan'), float('nan')
+                
+                # WICHTIG: Verwende die korrekte Brennweiten-Berechnung!
+                f_sag, f_tan = get_lens_focal_lengths_standalone(lens, wavelength)
+                
+                # Linseneffekt hinzufügen
+                if f_sag is not None and f_sag != float('inf') and f_sag != 0:
+                    elements_sag.append((beam.matrices.lens, (float(f_sag),)))
+                
+                if f_tan is not None and f_tan != float('inf') and f_tan != 0:
+                    elements_tan.append((beam.matrices.lens, (float(f_tan),)))
+                
+                last_position = position
+            
+            # Propagation zum Ziel
+            final_distance = distance - last_position
+            if final_distance > 0:
+                elements_sag.append((beam.matrices.free_space, (final_distance, n)))
+                elements_tan.append((beam.matrices.free_space, (final_distance, n)))
+            elif final_distance < 0:
+                return float('inf'), float('inf'), float('nan'), float('nan')
+            
+            # Propagiere q-Parameter durch das System
+            q_sag_final = q_sag
+            q_tan_final = q_tan
+            
+            for element, params in elements_sag:
+                if callable(element):
+                    abcd_matrix = element(*params)
+                    q_sag_final = beam.propagate_q(q_sag_final, abcd_matrix)
+            
+            for element, params in elements_tan:
+                if callable(element):
+                    abcd_matrix = element(*params)
+                    q_tan_final = beam.propagate_q(q_tan_final, abcd_matrix)
+            
+            def get_w0_and_focus(q_final, z_out):
+                n = 1.0
+                zR = np.imag(q_final)
+                if zR <= 0:
+                    return float('inf'), float('nan')
+                w0 = np.sqrt(wavelength * zR / (np.pi * n))
+                focus_position = z_out - np.real(q_final)
+                return w0, focus_position
+            
+            w0_sag, focus_pos_sag = get_w0_and_focus(q_sag_final, distance)
+            w0_tan, focus_pos_tan = get_w0_and_focus(q_tan_final, distance)
+            
+            return w0_sag, w0_tan, focus_pos_sag, focus_pos_tan
+        
+        def calculate_residuals_standalone(distances, lens_combination, optimizer_params):
+            """Standalone-Version der Residuen-Berechnung mit automatischer Permutation"""
+            try:
+                waist_sag, waist_tan, position_sag, position_tan = calculate_beam_parameters_standalone(
+                    distances, lens_combination, optimizer_params
+                )
+                
+                if (np.isnan(waist_sag) or np.isnan(waist_tan) or 
+                    np.isnan(position_sag) or np.isnan(position_tan) or
+                    waist_sag <= 0 or waist_tan <= 0 or
+                    waist_sag == float('inf') or waist_tan == float('inf')):
+                    return np.array([1e6, 1e6, 1e6, 1e6])
+                
+                # Zielwerte
+                target_pos_sag = optimizer_params['distance'] + optimizer_params['waist_position_goal_sag']
+                target_pos_tan = optimizer_params['distance'] + optimizer_params['waist_position_goal_tan']
+                
+                # Normalisierte Residuen
+                waist_error_sag = (waist_sag - optimizer_params['waist_goal_sag']) / optimizer_params['waist_goal_sag']
+                waist_error_tan = (waist_tan - optimizer_params['waist_goal_tan']) / optimizer_params['waist_goal_tan']
+                
+                pos_norm_sag = max(abs(target_pos_sag), abs(position_sag), 1e-6)
+                pos_norm_tan = max(abs(target_pos_tan), abs(position_tan), 1e-6)
+                
+                pos_error_sag = (position_sag - target_pos_sag) / pos_norm_sag
+                pos_error_tan = (position_tan - target_pos_tan) / pos_norm_tan
+                
+                # Gewichtung
+                weight = optimizer_params.get('weight', 0.5)
+                waist_weight = np.sqrt(1 - weight)
+                pos_weight = np.sqrt(weight)
+                
+                return np.array([
+                    waist_weight * waist_error_sag,
+                    waist_weight * waist_error_tan,
+                    pos_weight * pos_error_sag,
+                    pos_weight * pos_error_tan
+                ])
+                
+            except Exception:
+                return np.array([1e6, 1e6, 1e6, 1e6])
+        
+        # Optimierung für diese Kombination
+        num_lenses = len(lens_combination)
+        best_result = None
+        best_fitness = float('inf')
+        
+        num_starts = min(3, max(1, 6 // num_lenses))
+        
+        for start_attempt in range(num_starts):
+            try:
+                if start_attempt == 0:
+                    # Gleichmäßig verteilte positive Abstände
+                    initial_distances = np.full(num_lenses, distance / (num_lenses + 1))
+                elif start_attempt == 1:
+                    # Mischung aus positiven und negativen Abständen
+                    initial_distances = np.random.uniform(-distance/4, distance/2, num_lenses)
+                else:
+                    # Weitere zufällige Variationen
+                    initial_distances = np.random.uniform(-distance/3, distance/3, num_lenses)
+                
+                # Test der Residuen-Funktion
+                test_residuals = calculate_residuals_standalone(initial_distances, lens_combination, optimizer_params)
+                if np.any(np.abs(test_residuals) > 1e5):
+                    continue
+                
+                # Grenzen für Abstände: können jetzt auch negativ sein
+                max_abs_dist = distance * 0.8  # Maximaler Absolutwert
+                bounds = ([-max_abs_dist] * num_lenses, [max_abs_dist] * num_lenses)
+                
+                result = least_squares(
+                    lambda dist: calculate_residuals_standalone(dist, lens_combination, optimizer_params),
+                    initial_distances,
+                    bounds=bounds,
+                    method='trf',
+                    max_nfev=100,
+                    ftol=1e-12,
+                    xtol=1e-12,
+                    gtol=1e-12
+                )
+                
+                if result.success or result.cost < best_fitness:
+                    final_fitness = np.sum(result.fun**2)
+                    
+                    if final_fitness < best_fitness:
+                        best_fitness = final_fitness
+                        
+                        # Konvertiere zu Individual mit finaler Reihenfolge
+                        sorted_lenses, sorted_positions = distances_to_positions_and_order(result.x)
+                        individual = [(lens, pos) for lens, pos in zip(sorted_lenses, sorted_positions)]
+                        
+                        waist_sag, waist_tan, position_sag, position_tan = calculate_beam_parameters_standalone(
+                            result.x, lens_combination, optimizer_params
+                        )
+                        
+                        if (not np.isnan(waist_sag) and not np.isnan(waist_tan) and 
+                            not np.isnan(position_sag) and not np.isnan(position_tan) and
+                            waist_sag > 0 and waist_tan > 0 and 
+                            waist_sag != float('inf') and waist_tan != float('inf')):
+                            
+                            best_result = {
+                                'lenses': individual,
+                                'waist_sag': waist_sag,
+                                'waist_tan': waist_tan,
+                                'position_sag': position_sag,
+                                'position_tan': position_tan,
+                                'fitness': final_fitness,
+                                'combination': lens_combination
+                            }
+                            
+            except Exception:
+                continue
+        
+        return best_result
+        
+    except Exception:
+        return None
+
 class OptimizationWorker(QObject):
     """Worker-Klasse für die Durchführung der Optimierung in einem separaten Thread"""
-    finished = pyqtSignal(object)  # Signal mit Optimierungsergebnis
-    error = pyqtSignal(str)      # Signal für Fehler
-    progress = pyqtSignal(int)   # Signal für Fortschrittsanzeige (nur aktueller Wert)
+    finished = pyqtSignal(object)
+    error = pyqtSignal(str)
+    progress = pyqtSignal(int)
     
-    def __init__(self, optimizer, max_lenses, num_runs=3):
+    def __init__(self, optimizer, max_lenses, num_runs=100, total_generations=30):
         super().__init__()
         self.optimizer = optimizer
         self.max_lenses = max_lenses
         self.num_runs = num_runs
+        self.total_generations = total_generations
         self.abort_flag = False
         
     @pyqtSlot()
     def run(self):
-        """Führt die Optimierung in einem separaten Thread aus"""
+        """Führt die parallelisierte Kombinationsoptimierung aus"""
         try:
-            # Validiere Parameter
             if not self.optimizer.lens_library:
                 self.error.emit("No lenses in library. Please select lenses first.")
                 return
                 
-            # Stellt sicher, dass max_lenses mindestens 1 ist
             max_lenses = max(1, self.max_lenses)
             
-            # Stellt sicher, dass genügend Linsen in der Bibliothek vorhanden sind
             if len(self.optimizer.lens_library) < 1:
                 self.error.emit("Not enough lenses in library. Need at least 1 lens.")
                 return
             
-            # Führe Multi-Run Optimierung durch
-            result = self._run_multi_optimization(max_lenses, self.num_runs)
-            
-            # Sende Ergebnis zurück
+            result = self._run_parallel_optimization(max_lenses)
             self.finished.emit(result)
             
         except Exception as e:
             self.error.emit(f"Error during optimization: {str(e)}")
     
-    def _run_multi_optimization(self, max_lenses, num_runs):
+    def _run_parallel_optimization(self, max_lenses):
+        """Parallelisierte Optimierung mit multiprocessing"""
         results = []
-        best_result = None
-        best_fitness = float('inf')
-        total_generations = 30
-
-        self.optimizer.max_lenses = max_lenses
-        self.optimizer.problem()
-
-        for run in range(num_runs):
+        seen_signatures = set()
+        
+        # Generiere alle Kombinationen
+        all_combinations = list(itertools.combinations_with_replacement(
+            self.optimizer.lens_library, max_lenses
+        ))
+        
+        total_combinations = len(all_combinations)
+        
+        # Optimizer-Parameter für Worker-Prozesse
+        optimizer_params = {
+            'wavelength': self.optimizer.wavelength,
+            'distance': self.optimizer.distance,
+            'waist_input_sag': self.optimizer.waist_input_sag,
+            'waist_input_tan': self.optimizer.waist_input_tan,
+            'waist_position_sag': self.optimizer.waist_position_sag,
+            'waist_position_tan': self.optimizer.waist_position_tan,
+            'waist_goal_sag': self.optimizer.waist_goal_sag,
+            'waist_goal_tan': self.optimizer.waist_goal_tan,
+            'waist_position_goal_sag': self.optimizer.waist_position_goal_sag,
+            'waist_position_goal_tan': self.optimizer.waist_position_goal_tan,
+            'weight': 0.5  # Fallback-Gewichtung
+        }
+        
+        # Gewichtung aus UI holen, falls verfügbar
+        try:
+            if hasattr(self.optimizer, 'ui_modematcher_calculation'):
+                optimizer_params['weight'] = self.optimizer.ui_modematcher_calculation.weight_slider.value() / 100.0
+        except:
+            pass
+        
+        # Anzahl Prozessorkerne
+        num_cores = min(mp.cpu_count(), len(all_combinations))
+        num_cores = max(1, num_cores - 1)  # Einen Kern für UI freilassen
+        
+        # Daten für Worker vorbereiten
+        combination_data = [(combo, optimizer_params) for combo in all_combinations]
+        
+        # Parallelisierung mit Pool
+        if num_cores > 1:
+            try:
+                with mp.Pool(processes=num_cores) as pool:
+                    # Progress-Tracking mit imap
+                    completed = 0
+                    for result in pool.imap(optimize_single_combination, combination_data):
+                        if self.abort_flag:
+                            pool.terminate()
+                            break
+                            
+                        completed += 1
+                        progress_percent = int((completed / total_combinations) * 100)
+                        self.progress.emit(progress_percent)
+                        
+                        if result is not None:
+                            # Duplikate filtern
+                            sig = self._combination_signature(result)
+                            if sig not in seen_signatures:
+                                seen_signatures.add(sig)
+                                results.append(result)
+                                
+            except Exception as e:
+                # Fallback auf sequenzielle Verarbeitung
+                self.error.emit(f"Parallel processing failed, falling back to sequential: {str(e)}")
+                return self._run_sequential_optimization(max_lenses)
+        else:
+            # Sequenzielle Verarbeitung für wenige Kombinationen
+            return self._run_sequential_optimization(max_lenses)
+        
+        # Sortiere Ergebnisse nach Fitness
+        results.sort(key=lambda x: x['fitness'])
+        self.progress.emit(100)
+        return results
+    
+    def _run_sequential_optimization(self, max_lenses):
+        """Fallback: Sequenzielle Optimierung"""
+        results = []
+        seen_signatures = set()
+        
+        all_combinations = list(itertools.combinations_with_replacement(
+            self.optimizer.lens_library, max_lenses
+        ))
+        
+        total_combinations = len(all_combinations)
+        current_combination = 0
+        
+        for lens_combination in all_combinations:
             if self.abort_flag:
                 break
+                
+            current_combination += 1
+            progress_percent = int((current_combination / total_combinations) * 100)
+            self.progress.emit(progress_percent)
+            
+            try:
+                optimized_result = self._optimize_positions_for_combination(lens_combination)
+                
+                if optimized_result is not None:
+                    sig = self._combination_signature(optimized_result)
+                    if sig not in seen_signatures:
+                        seen_signatures.add(sig)
+                        results.append(optimized_result)
+                        
+            except Exception:
+                continue
+        
+        results.sort(key=lambda x: x['fitness'])
+        self.progress.emit(100)
+        return results
+    
+    def _optimize_positions_for_combination(self, lens_combination):
+        """Optimiert die Positionen für eine gegebene Linsenkombination mit Levenberg-Marquardt"""
+        num_lenses = len(lens_combination)
+        
+        # Mehrere Startpunkte ausprobieren für bessere Konvergenz
+        best_result = None
+        best_fitness = float('inf')
+        
+        num_starts = min(5, max(1, 10 // num_lenses))  # Weniger Starts für mehr Linsen
+        
+        for start_attempt in range(num_starts):
+            try:
+                # Zufällige Startpositionen
+                if start_attempt == 0:
+                    # Erster Versuch: gleichmäßig verteilte Positionen
+                    initial_positions = np.linspace(0.1 * self.optimizer.distance, 
+                                                  0.9 * self.optimizer.distance, 
+                                                  num_lenses)
+                else:
+                    # Weitere Versuche: zufällige Positionen
+                    initial_positions = np.sort(np.random.uniform(
+                        0, self.optimizer.distance, num_lenses
+                    ))
+                
+                # Definiere Residuen-Funktion für LM
+                def residuals(positions):
+                    return self._calculate_residuals(lens_combination, positions)
+                
+                # Test ob Residuen-Funktion funktioniert
+                test_residuals = residuals(initial_positions)
+                if np.any(np.abs(test_residuals) > 1e5):
+                    continue
+                
+                # Grenzen für Positionen
+                bounds = ([0] * num_lenses, [self.optimizer.distance] * num_lenses)
+                
+                # Levenberg-Marquardt Optimierung
+                result = least_squares(
+                    residuals,
+                    initial_positions,
+                    bounds=bounds,
+                    method='trf',
+                    max_nfev=1000,
+                    ftol=1e-12,
+                    xtol=1e-12,
+                    gtol=1e-12
+                )
+                
+                if result.success or result.cost < best_fitness:  # Auch bei nicht-convergence gute Ergebnisse nehmen
+                    # Berechne finale Fitness
+                    final_fitness = np.sum(result.fun**2)
+                    
+                    if final_fitness < best_fitness:
+                        best_fitness = final_fitness
+                        
+                        # Berechne Strahlparameter
+                        individual = [(lens, pos) for lens, pos in zip(lens_combination, result.x)]
+                        waist_sag, waist_tan, position_sag, position_tan = self.optimizer.calculate_beam_parameters(individual)
+                        
+                        # Prüfe auf gültige Ergebnisse
+                        if (not np.isnan(waist_sag) and not np.isnan(waist_tan) and 
+                            not np.isnan(position_sag) and not np.isnan(position_tan) and
+                            waist_sag > 0 and waist_tan > 0):
+                            
+                            best_result = {
+                                'lenses': individual,
+                                'waist_sag': waist_sag,
+                                'waist_tan': waist_tan,
+                                'position_sag': position_sag,
+                                'position_tan': position_tan,
+                                'fitness': final_fitness,
+                                'combination': lens_combination
+                            }
+                            
+            except Exception as e:
+                continue
+        
+        return best_result
+    
+    def _calculate_residuals(self, lens_combination, positions):
+        """Berechnet Residuen für die LM-Optimierung"""
+        try:
+            # Erstelle Individual aus Kombination und Positionen
+            individual = [(lens, pos) for lens, pos in zip(lens_combination, positions)]
+            
+            # Berechne Strahlparameter
+            waist_sag, waist_tan, position_sag, position_tan = self.optimizer.calculate_beam_parameters(individual)
+            
+            # Prüfe auf ungültige Werte
+            if (np.isnan(waist_sag) or np.isnan(waist_tan) or 
+                np.isnan(position_sag) or np.isnan(position_tan) or
+                waist_sag <= 0 or waist_tan <= 0):
+                return np.array([1e6, 1e6, 1e6, 1e6])
+            
+            # Berechne Residuen (Abweichungen von Zielwerten)
+            target_pos_sag = self.optimizer.distance + self.optimizer.waist_position_goal_sag
+            target_pos_tan = self.optimizer.distance + self.optimizer.waist_position_goal_tan
+            
+            # Normalisierte Residuen
+            waist_error_sag = (waist_sag - self.optimizer.waist_goal_sag) / self.optimizer.waist_goal_sag
+            waist_error_tan = (waist_tan - self.optimizer.waist_goal_tan) / self.optimizer.waist_goal_tan
+            
+            # Positionsfehler normalisiert
+            pos_norm_sag = max(abs(target_pos_sag), abs(position_sag), 1e-6)
+            pos_norm_tan = max(abs(target_pos_tan), abs(position_tan), 1e-6)
+            
+            pos_error_sag = (position_sag - target_pos_sag) / pos_norm_sag
+            pos_error_tan = (position_tan - target_pos_tan) / pos_norm_tan
 
-            self.progress.emit(run * total_generations)
-            pop_size = 50
-            population = self.optimizer.toolbox.population(n=pop_size)
-            stats = tools.Statistics(lambda ind: ind.fitness.values)
-            stats.register("avg", np.mean)
-            stats.register("min", np.min)
-            stats.register("max", np.max)
-            hof = tools.HallOfFame(1)
-
-            for gen in range(total_generations):
-                if self.abort_flag:
-                    break
-                population = algorithms.varAnd(population, self.optimizer.toolbox, 0.5, 0.2)
-                fits = self.optimizer.toolbox.map(self.optimizer.toolbox.evaluate, population)
-                for fit, ind in zip(fits, population):
-                    ind.fitness.values = fit
-                population = self.optimizer.toolbox.select(population, len(population))
-                hof.update(population)
-                self.progress.emit(run * total_generations + gen + 1)
-
-            if not self.abort_flag and hof:
-                best_individual = hof[0]
-                try:
-                    optimized_individual = self.optimizer._local_optimize(best_individual)
-                    if self.optimizer.fitness_function(optimized_individual)[0] < self.optimizer.fitness_function(best_individual)[0]:
-                        best_individual = optimized_individual
-                except Exception as e:
-                    pass
-
-                current_fitness = best_individual.fitness.values[0]
-                waist_sag, waist_tan, position_sag, position_tan = self.optimizer.calculate_beam_parameters(best_individual)
-
-                result = {
-                    'lenses': [(lens, pos) for lens, pos in best_individual],
-                    'waist_sag': waist_sag,
-                    'waist_tan': waist_tan,
-                    'position_sag': position_sag,
-                    'position_tan': position_tan,
-                    'fitness': current_fitness,
-                    'run': run + 1
-                }
-                results.append(result)
-
-                if current_fitness < best_fitness:
-                    best_result = result
-                    best_fitness = current_fitness
-
-        return results  # <--- Jetzt wird eine Liste zurückgegeben!
+            # Gewichtung zwischen Strahlgröße und Position
+            try:
+                weight = self.optimizer.ui_modematcher_calculation.weight_slider.value() / 100.0
+            except AttributeError:
+                weight = 0.5
+            
+            # Rückgabe als Array von Residuen
+            waist_weight = np.sqrt(1 - weight)
+            pos_weight = np.sqrt(weight)
+            
+            residuals = np.array([
+                waist_weight * waist_error_sag,
+                waist_weight * waist_error_tan,
+                pos_weight * pos_error_sag,
+                pos_weight * pos_error_tan
+            ])
+            
+            return residuals
+            
+        except Exception as e:
+            # Bei Fehlern: große Residuen zurückgeben
+            return np.array([1e6, 1e6, 1e6, 1e6])
     
     def stop(self):
         """Bricht die Optimierung ab"""
         self.abort_flag = True
+
+    def _combination_signature(self, result, pos_digits=6):
+        """Erzeugt eine Signatur für eine Linsenkombination"""
+        lenses = result.get('lenses', [])
+        sig_parts = []
+        for lens, pos in sorted(lenses, key=lambda x: x[1]):
+            props = lens.get('properties', {})
+            f_sag = props.get('Focal length sagittal')
+            f_tan = props.get('Focal length tangential')
+            sig_parts.append((
+                lens.get('name', ''),
+                round(float(pos), pos_digits),
+                f_sag,
+                f_tan
+            ))
+        return tuple(sig_parts)
 
 class LensSystemOptimizer:
     def __init__(self, matrices):
         self.matrices = matrices
         self.lens_library = []  # Wird dynamisch geladen
         self.vc = ValueConverter()
-        
-        # DEAP Setup entfernt - wird jetzt global in graycad_start.py gemacht
-        self.toolbox = base.Toolbox()
+        self.material = Material
         
         # Lade Linsenbibliothek aus temporärer Datei
         self._load_lens_library_from_temp_file()
@@ -183,216 +666,16 @@ class LensSystemOptimizer:
         except Exception as e:
             QMessageBox.critical(None, "Error", f"Error loading lens library: {str(e)}")
 
-    def _transfer_setup_to_mainwindow(self, setup_components):
-        """
-        Überträgt das Setup an das Hauptfenster über globale Widget-Suche.
-        """
-        try:
-            from PyQt5.QtWidgets import QApplication
-            app = QApplication.instance()
-            if app:
-                for widget in app.allWidgets():
-                    if hasattr(widget, 'receive_setup') and hasattr(widget, 'setupList'):
-                        widget.receive_setup(setup_components)
-                        return
-            # Falls keine Methode funktioniert
-            raise Exception("Could not find MainWindow instance to transfer setup")
-        except Exception as e:
-            raise Exception(f"Failed to transfer setup: {e}")
-        
-    def plot_setup(self):
-        """
-        Erstellt eine Komponentenliste für das aktuelle Linsensystem und sendet sie an das Hauptfenster.
-        Implementiert die korrekte Propagation zwischen Komponenten.
-        """
-        try:
-            # Hole die aktuellen Strahlparameter
-            wavelength = self.wavelength
-            waist_sag = self.waist_input_sag
-            waist_tan = self.waist_input_tan
-            waist_pos_sag = self.waist_position_sag
-            waist_pos_tan = self.waist_position_tan
-            
-            setup_components = []
-            
-            # 1. Beam-Komponente
-            beam_component = {
-                "type": "BEAM",
-                "name": "Beam",
-                "properties": {
-                    "Wavelength": wavelength,
-                    "Waist radius sagittal": waist_sag,
-                    "Waist radius tangential": waist_tan,
-                    "Waist position sagittal": waist_pos_sag,
-                    "Waist position tangential": waist_pos_tan,
-                    "Rayleigh range sagittal": np.pi * waist_sag**2 / wavelength,
-                    "Rayleigh range tangential": np.pi * waist_tan**2 / wavelength,
-                    "IS_ROUND": False
-                }
-            }
-            setup_components.append(beam_component)
-
-            # 2. Linsen-Komponenten mit korrekter Propagation
-            if hasattr(self, "last_optimization_results") and self.last_optimization_results:
-                best_result = min(self.last_optimization_results, key=lambda r: r['fitness'])
-                # Sortiere Linsen nach Position
-                sorted_lenses = sorted(best_result.get('lenses', []), key=lambda x: x[1])
-                
-                # Startposition für erste Propagation
-                last_position = 0
-                
-                # Füge Propagationen und Linsen abwechselnd hinzu
-                for lens, position in sorted_lenses:
-                    # Berechne Propagationsdistanz zur nächsten Linse
-                    prop_distance = position - last_position
-                    
-                    # Propagation zur Linsenposition
-                    if prop_distance > 0:
-                        prop_component = {
-                            "type": "PROPAGATION",
-                            "name": f"Propagation {last_position:.3f}m to {position:.3f}m",
-                            "manufacturer": "",
-                            "properties": {
-                                "Length": prop_distance,
-                                "Refractive index": 1.0
-                            }
-                        }
-                        setup_components.append(prop_component)
-                    
-                    # Linse hinzufügen (ohne Position als Property)
-                    lens_component = dict(lens)  # Kopiere die Komponente
-                    setup_components.append(lens_component)
-                    
-                    # Aktualisiere letzte Position
-                    last_position = position
-                
-                # Abschließende Propagation bis zum Ziel
-                final_distance = self.distance - last_position
-                if final_distance > 0:
-                    final_prop = {
-                        "type": "PROPAGATION",
-                        "name": f"Propagation {last_position:.3f}m to {self.distance:.3f}m",
-                        "properties": {
-                            "Length": final_distance,
-                            "Refractive index": 1.0
-                        }
-                    }
-                    setup_components.append(final_prop)
-                    
-                # Falls zusätzlich eine Anzeige des Strahls am Zielort gewünscht ist
-                # Hier könntest du eine Beam-out Komponente hinzufügen
-            else:
-                # Fallback: Keine Optimierungsergebnisse vorhanden
-                QMessageBox.warning(None, "No Setup", "No optimized lens system available for plotting.")
-                return
-
-            # Übertrage das Setup an das Hauptfenster
-            self._transfer_setup_to_mainwindow(setup_components)
-
-            QMessageBox.information(None, "Setup Generated", f"Generated lens system setup with {len(setup_components)} components and fitness {best_result.get('fitness', 0):.4e}")
-
-        except Exception as e:
-            QMessageBox.critical(None, "Error", f"Error generating setup: {str(e)}")
-
     def get_beam_parameters(self):
         """Lade Strahlparameter aus der temporären Datei"""
         temp_data_modematcher = config.get_temp_data_modematcher()
         (self.wavelength, self.distance, self.waist_input_sag, self.waist_input_tan, 
         self.waist_position_sag, self.waist_position_tan, self.waist_goal_sag, 
         self.waist_goal_tan, self.waist_position_goal_sag, self.waist_position_goal_tan) = temp_data_modematcher
-
-    def safe_crossover(self, ind1, ind2):
-        """Sicherer Crossover für Individuen beliebiger Länge"""
-        # For very short individuals, just swap them entirely
-        if len(ind1) <= 1 or len(ind2) <= 1:
-            ind1[:], ind2[:] = ind2[:], ind1[:]
-            return ind1, ind2
-            
-        # For longer individuals, use two-point crossover
-        try:
-            return tools.cxTwoPoint(ind1, ind2)
-        except Exception:
-            # Fallback: swap random lens between individuals
-            if len(ind1) > 0 and len(ind2) > 0:
-                idx1 = random.randint(0, len(ind1) - 1)
-                idx2 = random.randint(0, len(ind2) - 1)
-                ind1[idx1], ind2[idx2] = ind2[idx2], ind1[idx1]
-            return ind1, ind2
-
-    def problem(self):
-        """Erstelle das Problem-Objekt abhängig von der Anzahl der Linsen"""
-        # Check if FitnessMin and Individual already exist in creator
-        if not hasattr(creator, "FitnessMin"):
-            creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-        
-        if not hasattr(creator, "Individual"):
-            creator.create("Individual", list, fitness=creator.FitnessMin)
-        
-        # Register the individual creation strategy
-        self.toolbox.register("individual", self.build_individual)
-        self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-        
-        # Register genetic operators
-        self.toolbox.register("evaluate", self.fitness_function)
-        # Use our safe crossover instead of standard cxTwoPoint
-        self.toolbox.register("mate", self.safe_crossover)
-        self.toolbox.register("mutate", self.mutate_lens_system, indpb=0.2)
-        self.toolbox.register("select", tools.selTournament, tournsize=3)
-    
-    def build_individual(self):
-        """Erstelle ein neues Individuum (Linsensystem)"""
-        individual = []
-        
-        # Zufällige Anzahl von Linsen (1 bis max_lenses)
-        if self.max_lenses > 1:
-            num_lenses = random.randint(1, self.max_lenses)
-        else:
-            # If max_lenses is 1, don't use randint
-            num_lenses = 1
-        
-        # Für jede Linse: wähle eine zufällige Linse aus der Bibliothek und eine zufällige Position
-        total_distance = self.distance  # Gesamtdistanz zwischen Eingangs- und Zielstrahl
-        
-        # FIX: Check if lens library is not empty
-        if not self.lens_library:
-            raise ValueError("Lens library is empty. Cannot create individuals.")
-            
-        for _ in range(num_lenses):
-            # Wähle zufällige Linse
-            lens = random.choice(self.lens_library)
-            # Wähle zufällige Position (0 bis total_distance)
-            position = random.uniform(0, total_distance)
-            # Füge Linse und Position zum Individual hinzu
-            individual.append((lens, position))
-        
-        # Sortiere Linsen nach Position
-        individual.sort(key=lambda x: x[1])
-        
-        return creator.Individual(individual)
-    
-    def mutate_lens_system(self, individual, indpb):
-        """Mutiere ein Linsensystem durch Ändern der Linsen oder Positionen"""
-        # FIX: Check if lens library is not empty
-        if not self.lens_library:
-            return individual,
-            
-        for i in range(len(individual)):
-            # Mit Wahrscheinlichkeit indpb, ändere die Linse
-            if random.random() < indpb:
-                individual[i] = (random.choice(self.lens_library), individual[i][1])
-            
-            # Mit Wahrscheinlichkeit indpb, ändere die Position
-            if random.random() < indpb:
-                individual[i] = (individual[i][0], random.uniform(0, self.distance))
-        
-        # Sortiere Linsen nach Position
-        individual.sort(key=lambda x: x[1])
-        return individual,
     
     def calculate_beam_parameters(self, individual):
         """Berechne die resultierenden Strahlparameter für ein gegebenes Linsensystem"""
         # Beam-Objekt erstellen
-        from src_physics.beam import Beam
         beam = Beam()
         
         # Initialisiere mit den Eingangsparametern
@@ -469,10 +752,6 @@ class LensSystemOptimizer:
         # Berechne echte w₀-Werte
         w0_sag, focus_pos_sag = get_w0_and_focus(q_sag_final, self.distance)
         w0_tan, focus_pos_tan = get_w0_and_focus(q_tan_final, self.distance)
-
-        # Debug entfernen:
-        # print(f"imaginary part of q_sag_final: {q_sag_final.imag}")
-        # print(f"real part of q_sag_final: {q_sag_final.real}")
         
         return w0_sag, w0_tan, focus_pos_sag, focus_pos_tan
 
@@ -481,8 +760,12 @@ class LensSystemOptimizer:
         properties = lens.get('properties', {})
         design_wavelength = properties.get('Design wavelength')
         lens_material = properties.get('Lens material')
-        f_sag = properties.get('Focal length sagittal')
-        f_tan = properties.get('Focal length tangential')
+        n_design = self.material.get_n(lens_material, design_wavelength)
+        n = self.material.get_n(lens_material, self.wavelength)
+        f_design_sag = properties.get('Focal length sagittal')
+        f_design_tan = properties.get('Focal length tangential')
+        f_sag = ((n_design-1)/(n-1)) * f_design_sag
+        f_tan = ((n_design-1)/(n-1)) * f_design_tan
 
         # Fallback: Wenn nur eine Brennweite existiert, beide gleich setzen
         if f_sag is None and f_tan is not None:
@@ -505,354 +788,90 @@ class LensSystemOptimizer:
 
         return f_sag, f_tan
     
-    def fitness_function(self, individual):
+    '''def fitness_function(self, individual):
         """Berechne Fitness für ein gegebenes Individuum"""
         # Berechne resultierende Strahlparameter
         w0_sag, w0_tan, focus_pos_sag, focus_pos_tan = self.calculate_beam_parameters(individual)
 
-        # Berechne Abweichung von Zielparametern (jetzt auf w0!)
-        rel_waist_error_sag = abs(self.waist_goal_sag - w0_sag)/(abs(self.waist_goal_sag) + abs(w0_sag))
-        rel_waist_error_tan = abs(self.waist_goal_tan - w0_tan)/(abs(self.waist_goal_tan) + abs(w0_tan))
+        # Berechne Abweichung von Zielparametern
+        rel_waist_error_sag = abs(self.waist_goal_sag - w0_sag)/(abs(self.waist_goal_sag))
+        rel_waist_error_tan = abs(self.waist_goal_tan - w0_tan)/(abs(self.waist_goal_tan))
         
         fitness_waist = rel_waist_error_sag + rel_waist_error_tan
 
         # Normalisierte Positionsabweichung (Fokusposition)
-        target_pos_sag = self.distance + self.waist_position_goal_sag 
+        target_pos_sag = self.distance + self.waist_position_goal_sag
         target_pos_tan = self.distance + self.waist_position_goal_tan
 
-        rel_pos_error_sag = abs(target_pos_sag - focus_pos_sag)/(abs(target_pos_sag) + abs(focus_pos_sag))
-        rel_pos_error_tan = abs(target_pos_tan - focus_pos_tan)/(abs(target_pos_tan) + abs(focus_pos_tan))
+        offset_sag = 1 - abs(target_pos_sag) / (1 + abs(focus_pos_sag))
+        offset_tan = 1 - abs(target_pos_tan) / (1 + abs(focus_pos_tan))
+
+        rel_pos_error_sag = abs(target_pos_sag - focus_pos_sag) / (abs(target_pos_sag) + abs(focus_pos_sag) + offset_sag)
+        rel_pos_error_tan = abs(target_pos_tan - focus_pos_tan) / (abs(target_pos_tan) + abs(focus_pos_tan) + offset_tan)
 
         fitness_position = rel_pos_error_sag + rel_pos_error_tan
 
         # Gewichtung zwischen Strahlgröße und Position
         try:
-            weight = self.ui.modematcher_calculation.weight_slider.value() / 100.0
+            weight = self.ui_modematcher_calculation.weight_slider.value() / 100.0
         except AttributeError:
             weight = 0.5
 
         fitness = ((1 - weight) * fitness_waist) + (weight * fitness_position)
 
-        return (fitness,)
-    
-    def optimize_lens_system(self, max_lenses, num_runs=70):
-        """Startet die Multi-Run-Optimierung in einem separaten Thread"""
+        return (fitness,)'''
+        
+    def optimize_lens_system(self, max_lenses, num_runs=100, total_generation=60):
+        """Startet die neue Kombinationsoptimierung in einem separaten Thread"""
         self.get_beam_parameters()
         self._load_lens_library_from_temp_file()
         
         try:
             # Validierungen
             if not self.lens_library:
-                QMessageBox.warning(None, "Warning", "No lenses in library. Please select lenses first.")
-                return None
+                raise ValueError("No lenses in library. Please select lenses first.")
                 
             if len(self.lens_library) < 1:
-                QMessageBox.warning(None, "Warning", "Not enough lenses in library. Need at least 1 lens.")
-                return None
+                raise ValueError("Not enough lenses in library. Need at least 1 lens.")
             
+            # Warnung bei vielen Kombinationen - nur für max_lenses berechnen
+            n = len(self.lens_library)
+            r = max_lenses
+            total_combinations = 1
+            for i in range(r):
+                total_combinations = total_combinations * (n + i) // (i + 1)
+            
+            if total_combinations > 5000:
+                reply = QMessageBox.question(
+                    None, 
+                    "Large Search Space", 
+                    f"This will test {total_combinations} lens combinations with exactly {max_lenses} lenses. This may take a while. Continue?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.No:
+                    return None
+        
             # Erstelle Thread und Worker-Objekt
             self.thread = QThread()
-            self.worker = OptimizationWorker(self, max_lenses, num_runs)
+            self.worker = OptimizationWorker(self, max_lenses, num_runs, total_generation)
             
-            # UI-Elemente aktualisieren
-            ui_found = False
-            
-            # Suche progressBar in der UI
-            for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-                if hasattr(self, attr_name):
-                    ui_obj = getattr(self, attr_name)
-                    if hasattr(ui_obj, 'progressBar'):
-                        # Setze progressBar in der UI
-                        total_steps = num_runs * 30  # 50 Generationen pro Run
-                        ui_obj.progressBar.setMinimum(0)
-                        ui_obj.progressBar.setMaximum(total_steps)
-                        ui_obj.progressBar.setValue(0)
-                        
-                        # Verbinde Worker-Fortschritt mit progressBar
-                        self.worker.progress.connect(ui_obj.progressBar.setValue)
-                        
-                        # Deaktiviere Optimize-Button falls vorhanden
-                        if hasattr(ui_obj, 'button_optimize'):
-                            ui_obj.button_optimize.setEnabled(False)
-                        
-                        ui_found = True
-                        break
-            
-            # Fallback zu QProgressDialog wenn keine UI-ProgressBar gefunden wurde
-            if not ui_found:
-                progress_dialog = QProgressDialog("Running multi-optimization...", "Cancel", 0, num_runs * 50)
-                progress_dialog.setWindowTitle("Optimization Progress")
-                progress_dialog.setMinimumDuration(0)
-                progress_dialog.setValue(0)
-                progress_dialog.setModal(True)
-                
-                # Verbinde Cancel-Button mit Abbruch-Funktion
-                progress_dialog.canceled.connect(self.worker.stop)
-                
-                # Verbinde Worker-Fortschritt mit progressDialog
-                self.worker.progress.connect(progress_dialog.setValue)
-                self.worker.finished.connect(progress_dialog.close)
-                self.worker.error.connect(progress_dialog.close)
-        
             # Verschiebe Worker in Thread
             self.worker.moveToThread(self.thread)
             
-            # Verbinde Signale und Slots
+            # Verbinde nur interne Signale
             self.thread.started.connect(self.worker.run)
-            self.worker.finished.connect(self._on_multi_optimization_finished)
-            self.worker.error.connect(self._on_optimization_error)
             self.worker.finished.connect(self.thread.quit)
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
-            self.thread.finished.connect(self._reset_ui)
             
             # Starte Thread
             self.thread.start()
             
-            # Zeige Fortschrittsdialog falls nötig
-            if not ui_found:
-                progress_dialog.exec_()
-            
-            # Wir geben kein Ergebnis zurück, da die Berechnung asynchron erfolgt
-            return None
+            # Gib Worker zurück für externe Signal-Verbindungen
+            return self.worker
             
         except Exception as e:
-            QMessageBox.critical(None, "Optimization Error", f"Error setting up optimization: {str(e)}")
-            return None
-
-    def _reset_ui(self):
-        """Setzt UI-Elemente nach der Optimierung zurück"""
-        # Suche UI-Objekt mit progressBar
-        for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-            if hasattr(self, attr_name):
-                ui_obj = getattr(self, attr_name)
-                if hasattr(ui_obj, 'progressBar'):
-                    # Setze progressBar zurück
-                    ui_obj.progressBar.setValue(0)
-                    
-                    # Aktiviere Optimize-Button falls vorhanden
-                    if hasattr(ui_obj, 'button_optimize'):
-                        ui_obj.button_optimize.setEnabled(True)
-                    
-                    break
-    
-    def _on_multi_optimization_finished(self, results):
-            """
-            Befüllt das QTableWidget tableResults mit allen Optimierungsergebnissen.
-            Zeigt jetzt sagittale UND tangentiale Werte (zweizeilig pro Zelle).
-            Klick auf eine Zeile erzeugt eine temporäre Plot-Vorschau dieses Setups.
-            """
-            if not results:
-                QMessageBox.warning(None, "Optimization Result", "No valid solution found in any run.")
-                return
-
-            self.last_optimization_results = results # Speichern für Preview
-
-            # Zielwerte
-            w0_sag_goal = self.waist_goal_sag
-            w0_tan_goal = self.waist_goal_tan
-            z0_sag_goal = self.distance + self.waist_position_goal_sag
-            z0_tan_goal = self.distance + self.waist_position_goal_tan
-
-            # UI finden
-            ui = None
-            for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-                if hasattr(self, attr_name):
-                    ui = getattr(self, attr_name)
-                    break
-
-            if ui and hasattr(ui, 'tableResults'):
-                table = ui.tableResults
-                table.clearSelection()
-                table.setSortingEnabled(False)  # Temporär aus beim Füllen
-                table.setRowCount(len(results))
-                table.setColumnCount(6)
-
-                def fmt(v): 
-                    return self.vc.convert_to_nearest_string(v)
-
-                RESULT_ROLE = Qt.UserRole + 99  # eigener Role-Key
-
-                for row, result in enumerate(results):
-                    waist_sag = result['waist_sag']
-                    waist_tan = result.get('waist_tan', float('nan'))
-                    position_sag = result['position_sag']
-                    position_tan = result.get('position_tan', float('nan'))
-                    fitness = result['fitness']
-                    lens_count = len(result['lenses'])
-
-                    delta_w0_sag = waist_sag - w0_sag_goal
-                    delta_w0_tan = waist_tan - w0_tan_goal
-                    delta_z0_sag = position_sag - z0_sag_goal
-                    delta_z0_tan = position_tan - z0_tan_goal
-
-                    item_fitness = NumericTableWidgetItem(f"{fitness:.3e}", fitness)
-                    item_fitness.setData(RESULT_ROLE, result)  # result an erster Spalte hinterlegen
-                    item_lenses = NumericTableWidgetItem(f"{lens_count}", lens_count)
-                    item_waist = NumericTableWidgetItem(f"{fmt(waist_sag)}\n{fmt(waist_tan)}", waist_sag)
-                    item_delta_waist = NumericTableWidgetItem(f"{fmt(delta_w0_sag)}\n{fmt(delta_w0_tan)}", abs(delta_w0_sag))
-                    item_position = NumericTableWidgetItem(f"{fmt(position_sag)}\n{fmt(position_tan)}", position_sag)
-                    item_delta_position = NumericTableWidgetItem(f"{fmt(delta_z0_sag)}\n{fmt(delta_z0_tan)}", abs(delta_z0_sag))
-
-                    item_waist.setToolTip(f"Sagittal: {waist_sag:.6g}\nTangential: {waist_tan:.6g}")
-                    item_delta_waist.setToolTip(f"ΔSag: {delta_w0_sag:.6g}\nΔTan: {delta_w0_tan:.6g}")
-                    item_position.setToolTip(f"Sagittal focus pos: {position_sag:.6g}\nTangential focus pos: {position_tan:.6g}")
-                    item_delta_position.setToolTip(f"ΔSag pos: {delta_z0_sag:.6g}\nΔTan pos: {delta_z0_tan:.6g}")
-
-                    table.setItem(row, 0, item_fitness)
-                    table.setItem(row, 1, item_lenses)
-                    table.setItem(row, 2, item_waist)
-                    table.setItem(row, 3, item_delta_waist)
-                    table.setItem(row, 4, item_position)
-                    table.setItem(row, 5, item_delta_position)
-
-                table.setSortingEnabled(True)
-                table.sortItems(0, Qt.AscendingOrder)
-
-                # Nur einmal verbinden
-                if not getattr(table, "_preview_connected", False):
-                    table.itemSelectionChanged.connect(self._on_table_selection_changed)
-                    table._preview_connected = True
-
-    def _on_table_selection_changed(self):
-        """Handler: Auswahl im Ergebnis-Table -> dazugehöriges Setup temporär plotten."""
-        try:
-            ui = None
-            for attr_name in ['ui', 'modematcher_calculation', 'ui_modematcher_calculation']:
-                if hasattr(self, attr_name):
-                    ui = getattr(self, attr_name)
-                    break
-            if not ui or not hasattr(ui, 'tableResults'):
-                return
-            table = ui.tableResults
-            selected_ranges = table.selectedRanges()
-            if not selected_ranges:
-                return
-            # Nimm erste ausgewählte Zeile
-            row = selected_ranges[0].topRow()
-            first_item = table.item(row, 0)
-            if first_item is None:
-                return
-            RESULT_ROLE = Qt.UserRole + 99
-            result = first_item.data(RESULT_ROLE)
-            if result:
-                self._preview_result(result)
-        except Exception as e:
-            # Silent fail (kein QMessageBox Spam bei schneller Auswahl)
-            pass
-
-    def _preview_result(self, result):
-        """
-        Erzeugt ein temporäres Setup für das angeklickte Optimierungsergebnis
-        und sendet es an das Hauptfenster (ersetzt vorherige Vorschau).
-        """
-        try:
-            # Sicherstellen, dass Beam-Parameter vorhanden sind
-            if not hasattr(self, 'wavelength'):
-                self.get_beam_parameters()
-
-            wavelength = self.wavelength
-            waist_sag = self.waist_input_sag
-            waist_tan = self.waist_input_tan
-            waist_pos_sag = self.waist_position_sag
-            waist_pos_tan = self.waist_position_tan
-
-            setup_components = []
-
-            # Beam
-            setup_components.append({
-                "type": "BEAM",
-                "name": "Beam",
-                "properties": {
-                    "Wavelength": wavelength,
-                    "Waist radius sagittal": waist_sag,
-                    "Waist radius tangential": waist_tan,
-                    "Waist position sagittal": waist_pos_sag,
-                    "Waist position tangential": waist_pos_tan,
-                    "Rayleigh range sagittal": np.pi * waist_sag**2 / wavelength,
-                    "Rayleigh range tangential": np.pi * waist_tan**2 / wavelength,
-                    "IS_ROUND": False
-                }
-            })
-
-            # Linsen sortieren
-            sorted_lenses = sorted(result.get('lenses', []), key=lambda x: x[1])
-            last_position = 0.0
-
-            for lens, position in sorted_lenses:
-                distance = position - last_position
-                if distance > 0:
-                    setup_components.append({
-                        "type": "PROPAGATION",
-                        "name": f"Propagation {last_position:.3f}m to {position:.3f}m",
-                        "properties": {
-                            "Length": distance,
-                            "Refractive index": 1.0
-                        }
-                    })
-                setup_components.append(dict(lens))
-                last_position = position
-
-            final_distance = self.distance - last_position
-            if final_distance > 0:
-                setup_components.append({
-                    "type": "PROPAGATION",
-                    "name": f"Propagation {last_position:.3f}m to {self.distance:.3f}m",
-                    "properties": {
-                        "Length": final_distance,
-                        "Refractive index": 1.0
-                    }
-                })
-
-            # Transfer an MainWindow
-            self._transfer_setup_to_mainwindow(setup_components)
-            self._current_preview_result = result  # Merken falls später übernehmen möchte
-        except Exception as e:
-            QMessageBox.critical(None, "Preview Error", f"Failed to preview setup: {str(e)}")
-
-    def _on_optimization_error(self, error_message):
-        """Wird aufgerufen, wenn ein Fehler während der Optimierung auftritt"""
-        QMessageBox.critical(None, "Optimization Error", error_message)
-    
-    def _local_optimize(self, best_individual):
-        """Führt eine lokale Optimierung der Linsenpositionen durch"""
-        # Extrahiere nur die Positionen für die Optimierung
-        initial_positions = np.array([pos for _, pos in best_individual])
-        
-        # Definiere Grenzen (0 bis self.distance)
-        bounds = [(0, self.distance) for _ in range(len(initial_positions))]
-        
-        # Fitness-Funktion für lokale Optimierung
-        def position_fitness(positions):
-            # Erstelle neues Individuum mit optimierten Positionen
-            new_individual = [(lens, pos) for (lens, _), pos in zip(best_individual, positions)]
-            # Sortiere nach Position
-            new_individual.sort(key=lambda x: x[1])
-            # Berechne Fitness
-            return self.fitness_function(new_individual)[0]
-        
-        # Führe lokale Optimierung durch
-        result = minimize(
-            position_fitness,
-            initial_positions,
-            method='L-BFGS-B',
-            bounds=bounds,
-            options={'maxiter': 100, 'disp': False}
-        )
-        
-        # Erstelle optimiertes Individuum als neue Liste
-        optimized_list = [(lens, pos) for (lens, _), pos in zip(best_individual, result.x)]
-        # Sortiere nach Position
-        optimized_list.sort(key=lambda x: x[1])
-        
-        # Konvertiere zu einem DEAP Individual-Objekt
-        optimized_individual = creator.Individual(optimized_list)
-        
-        # Berechne und setze Fitness
-        fitness_value = self.fitness_function(optimized_individual)
-        optimized_individual.fitness.values = fitness_value
-        
-        return optimized_individual
+            raise Exception(f"Error setting up optimization: {str(e)}")
     
     def stop_optimization(self):
         """Stoppe die Optimierung"""

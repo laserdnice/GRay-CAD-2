@@ -1,0 +1,54 @@
+{
+    "name": "IR Thorlabs Linsen",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "500",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.49829999999999997,
+                "Focal length sagittal": 0.49829999999999997,
+                "Radius of curvature sagittal": 0.5150413232161317,
+                "Radius of curvature tangential": 0.5150413232161317,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "1000",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.9966999999999999,
+                "Focal length sagittal": 0.9966999999999999,
+                "Radius of curvature sagittal": 1.0301860061198445,
+                "Radius of curvature tangential": 1.0301860061198445,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "4,6",
+            "manufacturer": "",
+            "properties": {
+                "Focal length tangential": 0.004599999999999999,
+                "Focal length sagittal": 0.004599999999999999,
+                "Radius of curvature sagittal": 0.00475454562872608,
+                "Radius of curvature tangential": 0.00475454562872608,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": true,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

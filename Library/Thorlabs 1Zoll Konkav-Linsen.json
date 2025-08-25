@@ -1,0 +1,70 @@
+{
+    "name": "Thorlabs 1Zoll Konkav-Linsen",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "-50",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.04972925248029453,
+                "Focal length sagittal": -0.04972925248029453,
+                "Radius of curvature sagittal": -0.025699999999999997,
+                "Radius of curvature tangential": -0.025699999999999997,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-75",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.07469062823888595,
+                "Focal length sagittal": -0.07469062823888595,
+                "Radius of curvature sagittal": -0.038599999999999995,
+                "Radius of curvature tangential": -0.038599999999999995,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-100",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.09965200399747735,
+                "Focal length sagittal": -0.09965200399747735,
+                "Radius of curvature sagittal": -0.05149999999999999,
+                "Radius of curvature tangential": -0.05149999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-25",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.04972925248029453,
+                "Focal length sagittal": -0.04972925248029453,
+                "Radius of curvature sagittal": -0.025699999999999997,
+                "Radius of curvature tangential": -0.025699999999999997,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "NBK7",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}

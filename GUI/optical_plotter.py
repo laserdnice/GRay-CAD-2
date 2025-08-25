@@ -404,30 +404,60 @@ class OpticalSystemPlotter:
             print(f"Warning: Could not update vertical lines: {e}")
 
     def scale_visible_setup(self):
-        """Scale the visible setup elements to the current view"""
-        if self._updating_plot:
+        """
+        Skaliert auf das gesamte optische System UND berechnet die Kurve für den vollen Bereich neu.
+        Bisheriges Problem: Während _updating_plot True war, wurde sigXRangeChanged unterdrückt
+        -> keine Neuberechnung, nur Strecken des alten Ausschnitts.
+        Lösung: Vollbereich explizit neu sampeln.
+        """
+        system_length = getattr(self, '_system_length', None)
+        if system_length is None or system_length <= 0:
             return
-        
-        self._updating_plot = True
-        
+
+        # Vollbereich neu berechnen (unabhängig vom aktuell sichtbaren Ausschnitt)
         try:
+            self._updating_plot = True  # blockt Signal-Rekursion
+
+            # Falls globale Profile vorhanden -> direkt verwenden
+            if (self.z_global is not None and
+                self.w_sag_global is not None and
+                self.w_tan_global is not None and
+                len(self.z_global) > 1):
+                # Nutze globale Profile komplett
+                self.z_data = self.z_global.copy()
+                self.w_sag_data = self.w_sag_global.copy()
+                self.w_tan_data = self.w_tan_global.copy()
+                self.z_setup = system_length
+                if self.curve_sag is not None:
+                    self.curve_sag.setData(self.z_data, self.w_sag_data)
+                    self.curve_tan.setData(self.z_data, self.w_tan_data)
+                else:
+                    self._create_initial_plot()
+            else:
+                # Fallback: vollständiges Re-Sampling über gesamten Bereich
+                self._update_plot_internal(0.0, system_length)
+
+            # Achsen anpassen (Signale sind blockiert durch _updating_plot)
             vb = self.plotWidget.getViewBox()
-            
-            # EINFACHER: Direkte Range-Setzung ohne Signal-Manipulation
-            if hasattr(self, 'z_setup') and self.z_setup > 0:
-                # X-Range auf Setup-Bereich setzen
-                vb.setXRange(0, self.z_setup, padding=0.02)
-                    
-                max_w_sag = np.max(self.w_sag_data) if len(self.w_sag_data) > 0 else 0
-                max_w_tan = np.max(self.w_tan_data) if len(self.w_tan_data) > 0 else 0
-                ymax = max(max_w_sag, max_w_tan)
-                if ymax > 0:
-                    vb.setYRange(0, ymax * 1.1, padding=0.05)
-        
+            vb.setXRange(0.0, system_length, padding=0.02)
+
+            # Y-Range bestimmen
+            max_w_sag = float(np.max(self.w_sag_data)) if self.w_sag_data is not None and len(self.w_sag_data) else 0.0
+            max_w_tan = float(np.max(self.w_tan_data)) if self.w_tan_data is not None and len(self.w_tan_data) else 0.0
+            ymax = max(max_w_sag, max_w_tan)
+            if np.isfinite(ymax) and ymax > 0:
+                vb.setYRange(0.0, ymax * 1.1, padding=0.05)
+
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Error in scale_visible_setup: {e}")
+            QMessageBox.warning(self.plotWidget, "Error", f"Error in scale_visible_setup: {e}")
         finally:
+            # Jetzt Signale wieder zulassen
             self._updating_plot = False
+            # Sicherstellen, dass Segment-abhängige Dinge (Vertikallinien) aktuell sind
+            try:
+                self.update_vertical_lines()
+            except Exception:
+                pass
 
     def plot_optical_system_from_resonator(self, optical_system):
         """Plot optical system from resonator setup"""

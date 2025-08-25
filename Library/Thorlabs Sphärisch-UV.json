@@ -1,0 +1,854 @@
+{
+    "name": "Thorlabs Sph\u00e4risch-UV",
+    "type": "LIBRARY",
+    "components": [
+        {
+            "type": "LENS",
+            "name": "20 mm (klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.02006707892036989,
+                "Focal length sagittal": 0.02006707892036989,
+                "Radius of curvature sagittal": 0.009199999999999998,
+                "Radius of curvature tangential": 0.009199999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-12 mm (klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.011996623267612434,
+                "Focal length sagittal": -0.011996623267612434,
+                "Radius of curvature sagittal": -0.005499999999999999,
+                "Radius of curvature tangential": -0.005499999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "150 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.1505030919027742,
+                "Focal length sagittal": 0.1505030919027742,
+                "Radius of curvature sagittal": 0.06899999999999999,
+                "Radius of curvature tangential": 0.06899999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "200 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.2006707892036989,
+                "Focal length sagittal": 0.2006707892036989,
+                "Radius of curvature sagittal": 0.09199999999999998,
+                "Radius of curvature tangential": 0.09199999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "250 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.25083848650462365,
+                "Focal length sagittal": 0.25083848650462365,
+                "Radius of curvature sagittal": 0.11499999999999999,
+                "Radius of curvature tangential": 0.11499999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "750 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.7527335799369185,
+                "Focal length sagittal": 0.7527335799369185,
+                "Radius of curvature sagittal": 0.34509999999999996,
+                "Radius of curvature tangential": 0.34509999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "1000 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 1.0035720664415422,
+                "Focal length sagittal": 1.0035720664415422,
+                "Radius of curvature sagittal": 0.46009999999999995,
+                "Radius of curvature tangential": 0.46009999999999995,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-20 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.02006769481613395,
+                "Focal length sagittal": -0.02006769481613395,
+                "Radius of curvature sagittal": -0.009199999999999998,
+                "Radius of curvature tangential": -0.009199999999999998,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-25 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.025084618520167436,
+                "Focal length sagittal": -0.025084618520167436,
+                "Radius of curvature sagittal": -0.011499999999999998,
+                "Radius of curvature tangential": -0.011499999999999998,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "30 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.03010061838055484,
+                "Focal length sagittal": 0.03010061838055484,
+                "Radius of curvature sagittal": 0.0138,
+                "Radius of curvature tangential": 0.0138,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-30 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.030101542224200927,
+                "Focal length sagittal": -0.030101542224200927,
+                "Radius of curvature sagittal": -0.0138,
+                "Radius of curvature tangential": -0.0138,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "50 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.05016769730092473,
+                "Focal length sagittal": 0.05016769730092473,
+                "Radius of curvature sagittal": 0.022999999999999996,
+                "Radius of curvature tangential": 0.022999999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-50 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.05016923704033487,
+                "Focal length sagittal": -0.05016923704033487,
+                "Radius of curvature sagittal": -0.022999999999999996,
+                "Radius of curvature tangential": -0.022999999999999996,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "75 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.0752515459513871,
+                "Focal length sagittal": 0.0752515459513871,
+                "Radius of curvature sagittal": 0.034499999999999996,
+                "Radius of curvature tangential": 0.034499999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-75 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.07525385556050232,
+                "Focal length sagittal": -0.07525385556050232,
+                "Radius of curvature sagittal": -0.034499999999999996,
+                "Radius of curvature tangential": -0.034499999999999996,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-100 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.10033847408066975,
+                "Focal length sagittal": -0.10033847408066975,
+                "Radius of curvature sagittal": -0.04599999999999999,
+                "Radius of curvature tangential": -0.04599999999999999,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-200 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.2006769481613395,
+                "Focal length sagittal": -0.2006769481613395,
+                "Radius of curvature sagittal": -0.09199999999999998,
+                "Radius of curvature tangential": -0.09199999999999998,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "25.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.02499660048124337,
+                "Focal length sagittal": 0.02499660048124337,
+                "Radius of curvature sagittal": 0.01146,
+                "Radius of curvature tangential": 0.01146,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "12.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.011996623267612434,
+                "Focal length sagittal": 0.011996623267612434,
+                "Radius of curvature sagittal": 0.005499999999999999,
+                "Radius of curvature tangential": 0.005499999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "18.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.017994934901418652,
+                "Focal length sagittal": 0.017994934901418652,
+                "Radius of curvature sagittal": 0.008249999999999999,
+                "Radius of curvature tangential": 0.008249999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "21.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.02100499673947414,
+                "Focal length sagittal": 0.02100499673947414,
+                "Radius of curvature sagittal": 0.00963,
+                "Radius of curvature tangential": 0.00963,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "24.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.023993246535224867,
+                "Focal length sagittal": 0.023993246535224867,
+                "Radius of curvature sagittal": 0.010999999999999998,
+                "Radius of curvature tangential": 0.010999999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "36.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.03601168184514205,
+                "Focal length sagittal": 0.03601168184514205,
+                "Radius of curvature sagittal": 0.016509999999999997,
+                "Radius of curvature tangential": 0.016509999999999997,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "13.5 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.013501654186640177,
+                "Focal length sagittal": 0.013501654186640177,
+                "Radius of curvature sagittal": 0.006189999999999999,
+                "Radius of curvature tangential": 0.006189999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "22.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.02200835068549263,
+                "Focal length sagittal": 0.02200835068549263,
+                "Radius of curvature sagittal": 0.010089999999999998,
+                "Radius of curvature tangential": 0.010089999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "27.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.027003308373280355,
+                "Focal length sagittal": 0.027003308373280355,
+                "Radius of curvature sagittal": 0.012379999999999999,
+                "Radius of curvature tangential": 0.012379999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "84.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.08399817491559178,
+                "Focal length sagittal": 0.08399817491559178,
+                "Radius of curvature sagittal": 0.03850999999999999,
+                "Radius of curvature tangential": 0.03850999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "45.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.04499824327469901,
+                "Focal length sagittal": 0.04499824327469901,
+                "Radius of curvature sagittal": 0.020629999999999996,
+                "Radius of curvature tangential": 0.020629999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "72.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.07200155164797935,
+                "Focal length sagittal": 0.07200155164797935,
+                "Radius of curvature sagittal": 0.03300999999999999,
+                "Radius of curvature tangential": 0.03300999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "54.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.05400661674656071,
+                "Focal length sagittal": 0.05400661674656071,
+                "Radius of curvature sagittal": 0.024759999999999997,
+                "Radius of curvature tangential": 0.024759999999999997,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "80.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.08000657117382255,
+                "Focal length sagittal": 0.08000657117382255,
+                "Radius of curvature sagittal": 0.03667999999999999,
+                "Radius of curvature tangential": 0.03667999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "60.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.06000492838036693,
+                "Focal length sagittal": 0.06000492838036693,
+                "Radius of curvature sagittal": 0.02751,
+                "Radius of curvature tangential": 0.02751,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "400.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": 0.4000110438268081,
+                "Focal length sagittal": 0.4000110438268081,
+                "Radius of curvature sagittal": 0.18338999999999997,
+                "Radius of curvature tangential": 0.18338999999999997,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-9.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": -0.0090083734718617,
+                "Focal length sagittal": -0.0090083734718617,
+                "Radius of curvature sagittal": -0.004129999999999999,
+                "Radius of curvature tangential": -0.004129999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-18.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": -0.017994934901418652,
+                "Focal length sagittal": -0.017994934901418652,
+                "Radius of curvature sagittal": -0.008249999999999999,
+                "Radius of curvature tangential": -0.008249999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-13.5 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": -0.013523466228944927,
+                "Focal length sagittal": -0.013523466228944927,
+                "Radius of curvature sagittal": -0.006199999999999999,
+                "Radius of curvature tangential": -0.006199999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-27.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": -0.027046932457889854,
+                "Focal length sagittal": -0.027046932457889854,
+                "Radius of curvature sagittal": -0.012399999999999998,
+                "Radius of curvature tangential": -0.012399999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-40.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": -0.03998147354460653,
+                "Focal length sagittal": -0.03998147354460653,
+                "Radius of curvature sagittal": -0.018329999999999996,
+                "Radius of curvature tangential": -0.018329999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-150.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": -0.14997960288746018,
+                "Focal length sagittal": -0.14997960288746018,
+                "Radius of curvature sagittal": -0.06875999999999999,
+                "Radius of curvature tangential": -0.06875999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-250.0 mm EO",
+            "manufacturer": "Edmund Optics",
+            "properties": {
+                "Focal length tangential": -0.24998781685473842,
+                "Focal length sagittal": -0.24998781685473842,
+                "Radius of curvature sagittal": -0.11460999999999999,
+                "Radius of curvature tangential": -0.11460999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-1003.5 mm EO",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -1.0035720664415422,
+                "Focal length sagittal": -1.0035720664415422,
+                "Radius of curvature sagittal": -0.46009999999999995,
+                "Radius of curvature tangential": -0.46009999999999995,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "40 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.04013415784073978,
+                "Focal length sagittal": 0.04013415784073978,
+                "Radius of curvature sagittal": 0.018399999999999996,
+                "Radius of curvature tangential": 0.018399999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "6.0 mm(klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.006107371845329967,
+                "Focal length sagittal": 0.006107371845329967,
+                "Radius of curvature sagittal": 0.0027999999999999995,
+                "Radius of curvature tangential": 0.0027999999999999995,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "9 mm(klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.00894293734494745,
+                "Focal length sagittal": 0.00894293734494745,
+                "Radius of curvature sagittal": 0.004099999999999999,
+                "Radius of curvature tangential": 0.004099999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "-10 mm (klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": -0.010033847408066975,
+                "Focal length sagittal": -0.010033847408066975,
+                "Radius of curvature sagittal": -0.004599999999999999,
+                "Radius of curvature tangential": -0.004599999999999999,
+                "Design wavelength": 5.879999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "10 mm (klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.010033539460184945,
+                "Focal length sagittal": 0.010033539460184945,
+                "Radius of curvature sagittal": 0.004599999999999999,
+                "Radius of curvature tangential": 0.004599999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "125 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.12541924325231182,
+                "Focal length sagittal": 0.12541924325231182,
+                "Radius of curvature sagittal": 0.057499999999999996,
+                "Radius of curvature tangential": 0.057499999999999996,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "175 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.17558694055323654,
+                "Focal length sagittal": 0.17558694055323654,
+                "Radius of curvature sagittal": 0.08049999999999999,
+                "Radius of curvature tangential": 0.08049999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "100 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.10033539460184945,
+                "Focal length sagittal": 0.10033539460184945,
+                "Radius of curvature sagittal": 0.04599999999999999,
+                "Radius of curvature tangential": 0.04599999999999999,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "300 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.3010061838055484,
+                "Focal length sagittal": 0.3010061838055484,
+                "Radius of curvature sagittal": 0.13799999999999998,
+                "Radius of curvature tangential": 0.13799999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "500 mm ",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.5016769730092473,
+                "Focal length sagittal": 0.5016769730092473,
+                "Radius of curvature sagittal": 0.22999999999999998,
+                "Radius of curvature tangential": 0.22999999999999998,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "15 mm (klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.01505030919027742,
+                "Focal length sagittal": 0.01505030919027742,
+                "Radius of curvature sagittal": 0.0069,
+                "Radius of curvature tangential": 0.0069,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        },
+        {
+            "type": "LENS",
+            "name": "4 mm (klein)",
+            "manufacturer": "Thorlabs",
+            "properties": {
+                "Focal length tangential": 0.003926167614854979,
+                "Focal length sagittal": 0.003926167614854979,
+                "Radius of curvature sagittal": 0.0017999999999999997,
+                "Radius of curvature tangential": 0.0017999999999999997,
+                "Design wavelength": 5.875999999999999e-07,
+                "IS_ROUND": true,
+                "Lens material": "Fused Silica",
+                "Plan lens": false,
+                "Variable parameter": "Edit focal length"
+            }
+        }
+    ]
+}
