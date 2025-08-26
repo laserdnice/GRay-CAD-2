@@ -178,17 +178,9 @@ def optimize_single_combination(combination_data):
                     abcd_matrix = element(*params)
                     q_tan_final = beam.propagate_q(q_tan_final, abcd_matrix)
             
-            def get_w0_and_focus(q_final, z_out):
-                n = 1.0
-                zR = np.imag(q_final)
-                if zR <= 0:
-                    return float('inf'), float('nan')
-                w0 = np.sqrt(wavelength * zR / (np.pi * n))
-                focus_position = z_out - np.real(q_final)
-                return w0, focus_position
+            w0_sag, focus_pos_sag = beam.get_w0_and_focus(q_sag_final, distance, wavelength, n)
+            w0_tan, focus_pos_tan = beam.get_w0_and_focus(q_tan_final, distance, wavelength, n)
             
-            w0_sag, focus_pos_sag = get_w0_and_focus(q_sag_final, distance)
-            w0_tan, focus_pos_tan = get_w0_and_focus(q_tan_final, distance)
             
             return w0_sag, w0_tan, focus_pos_sag, focus_pos_tan
         
