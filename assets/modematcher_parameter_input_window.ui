@@ -113,7 +113,7 @@
     <item row="0" column="1" rowspan="2">
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="8" column="5">
-       <widget class="QLabel" name="label_13">
+       <widget class="QLabel" name="label_sag_out">
         <property name="text">
          <string>Sagittal</string>
         </property>
@@ -213,7 +213,7 @@
        </widget>
       </item>
       <item row="8" column="1">
-       <widget class="QLabel" name="label_11">
+       <widget class="QLabel" name="label_sag_in">
         <property name="text">
          <string>Sagittal</string>
         </property>
@@ -298,7 +298,7 @@
        </widget>
       </item>
       <item row="8" column="2">
-       <widget class="QLabel" name="label_12">
+       <widget class="QLabel" name="label_tan_in">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -347,7 +347,7 @@
        </spacer>
       </item>
       <item row="8" column="6">
-       <widget class="QLabel" name="label_14">
+       <widget class="QLabel" name="label_tan_out">
         <property name="enabled">
          <bool>false</bool>
         </property>
