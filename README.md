@@ -14,3 +14,4 @@ Installation guide:
 2. create venv: python3 -m venv venv
 3. activate venv: source bin/venv/activate
 4. install requirements.txt: pip install -r requirements.txt
+5. run: python3 graycad_start.py

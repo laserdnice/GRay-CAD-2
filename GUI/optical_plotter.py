@@ -307,13 +307,21 @@ class OpticalSystemPlotter:
             self._updating_plot = False
 
     def _update_plot_internal(self, z_min, z_max):
-        """Interne Plot-Update-Funktion ohne Signal-Behandlung"""
-        FIXED_RESOLUTION = 800  # Sichtbereich-Auflösung
-        z_visible = np.linspace(z_min, z_max, FIXED_RESOLUTION)
+        POINTS_IN_VIEWBOX = 1000  # oder beliebig viele
+        z_visible = np.linspace(z_min, z_max, POINTS_IN_VIEWBOX)
 
         try:
+            use_direct = False
             if self.z_global is None:
-                # Fallback: falls globale Profile fehlen (sollte nicht passieren)
+                use_direct = True
+            else:
+                z0 = self.z_global[0]
+                z1 = self.z_global[-1]
+                # Wenn der sichtbare Bereich klein ist, direkt berechnen!
+                if (z_max - z_min) < 0.1 * (z1 - z0) or (z_max - z_min) < 0.01:
+                    use_direct = True
+
+            if use_direct:
                 w_sag_vals = []
                 w_tan_vals = []
                 for z in z_visible:
@@ -327,7 +335,7 @@ class OpticalSystemPlotter:
                 self.w_sag_data = np.array(w_sag_vals)
                 self.w_tan_data = np.array(w_tan_vals)
             else:
-                # Interpolation + analytische Fortsetzung hinter letztem Element
+                # Interpolation wie gehabt
                 z0 = self.z_global[0]
                 z1 = self.z_global[-1]
                 self.z_data = z_visible
@@ -335,39 +343,31 @@ class OpticalSystemPlotter:
                 w_tan = np.empty_like(z_visible)
                 q_last_sag = self.q_sag_global[-1]
                 q_last_tan = self.q_tan_global[-1]
-                # Bereich innerhalb globaler Daten
                 inside_mask = (z_visible <= z1) & (z_visible >= z0)
                 if inside_mask.any():
                     z_inside = np.clip(z_visible[inside_mask], z0, z1)
                     w_sag[inside_mask] = np.interp(z_inside, self.z_global, self.w_sag_global)
                     w_tan[inside_mask] = np.interp(z_inside, self.z_global, self.w_tan_global)
-                # Hinter System: freie Ausbreitung ab q_last
                 after_mask = z_visible > z1
                 if after_mask.any():
                     dz = z_visible[after_mask] - z1
-                    # freie Ausbreitung: q_new = q_last + dz/n
                     q_prop_sag = q_last_sag + dz / (self.n if self.n else 1)
                     q_prop_tan = q_last_tan + dz / (self.n if self.n else 1)
                     w_sag[after_mask] = np.array([self.beam.beam_radius(qv, self.wavelength, self.n) for qv in q_prop_sag])
                     w_tan[after_mask] = np.array([self.beam.beam_radius(qv, self.wavelength, self.n) for qv in q_prop_tan])
-                # Vor System (z < 0) theoretisch nicht sichtbar, aber falls doch: konstant erster Wert
                 before_mask = z_visible < z0
                 if before_mask.any():
                     w_sag[before_mask] = self.w_sag_global[0]
                     w_tan[before_mask] = self.w_tan_global[0]
                 self.w_sag_data = w_sag
                 self.w_tan_data = w_tan
+
             self.z_setup = getattr(self, '_system_length', 0)
-            
-            # Plot aktualisieren oder erstellen
             if hasattr(self, "curve_sag") and self.curve_sag is not None:
-                # Nur Daten aktualisieren
                 self.curve_sag.setData(self.z_data, self.w_sag_data)
                 self.curve_tan.setData(self.z_data, self.w_tan_data)
             else:
-                # Initialer Plot
                 self._create_initial_plot()
-                
         except Exception as e:
             print(f"Error in plot calculation: {e}")
 
