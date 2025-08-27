@@ -92,6 +92,7 @@ class ModematcherParameters(QObject):
             # Sperre das tangentiale Feld
             self.ui_modematcher.lineEdit_waist_input_tan.setEnabled(False)
             self.ui_modematcher.lineEdit_waist_position_tan.setEnabled(False)
+            self.ui_modematcher.label_tan_in.setEnabled(False)
             
             # Verbinde Änderungen im sagittalen Feld mit dem tangentialen
             self.ui_modematcher.lineEdit_waist_input_sag.textChanged.connect(
@@ -103,6 +104,7 @@ class ModematcherParameters(QObject):
             # Entsperre das tangentiale Feld
             self.ui_modematcher.lineEdit_waist_input_tan.setEnabled(True)
             self.ui_modematcher.lineEdit_waist_position_tan.setEnabled(True)
+            self.ui_modematcher.label_tan_in.setEnabled(True)
             
             # Trenne die Verbindung zwischen den Feldern
             try:
@@ -128,6 +130,7 @@ class ModematcherParameters(QObject):
             # Sperre das tangentiale Feld
             self.ui_modematcher.lineEdit_waist_output_tan.setEnabled(False)
             self.ui_modematcher.lineEdit_waist_position_output_tan.setEnabled(False)
+            self.ui_modematcher.label_tan_out.setEnabled(False)
             
             # Verbinde Änderungen im sagittalen Feld mit dem tangentialen
             self.ui_modematcher.lineEdit_waist_output_sag.textChanged.connect(
@@ -139,6 +142,7 @@ class ModematcherParameters(QObject):
             # Entsperre das tangentiale Feld
             self.ui_modematcher.lineEdit_waist_output_tan.setEnabled(True)
             self.ui_modematcher.lineEdit_waist_position_output_tan.setEnabled(True)
+            self.ui_modematcher.label_tan_out.setEnabled(True)
             
             # Trenne die Verbindung zwischen den Feldern
             try:

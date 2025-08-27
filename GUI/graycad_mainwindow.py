@@ -235,6 +235,29 @@ class MainWindow(QMainWindow, PropertiesHandler):
                 # q direkt aus Cache (schnell)
                 q_at_sag = self.optical_plotter.get_q_at(z_val, mode="sagittal") if hasattr(self, 'optical_plotter') else None
                 q_at_tan = self.optical_plotter.get_q_at(z_val, mode="tangential") if hasattr(self, 'optical_plotter') else None
+                try:
+                    # z_out: bevorzugt eine property des optical_plotter, sonst letztes z_data
+                    z_out = getattr(self.optical_plotter, "system_length", None)
+                    if z_out is None and hasattr(self.optical_plotter, "z_data") and len(self.optical_plotter.z_data) > 0:
+                        z_out = float(self.optical_plotter.z_data[-1])
+                    if z_out is None:
+                        z_out = z_val
+                    wl = getattr(self, "wavelength", 514e-9)
+                    # Beam.get_w0_and_focus ist statisch; liefert (w0, focus_pos)
+                    w0_sag, z0_sag = Beam.get_w0_and_focus(q_at_sag, z_val, wl, 1.0) if q_at_sag is not None else (float('inf'), float('nan'))
+                    w0_tan, z0_tan = Beam.get_w0_and_focus(q_at_tan, z_val, wl, 1.0) if q_at_tan is not None else (float('inf'), float('nan'))
+                    def fmt(v):
+                        try:
+                            return self.vc.convert_to_nearest_string(v, self) if np.isfinite(v) else "—"
+                        except Exception:
+                            return "—"
+                    self.ui.label_w0_sag.setText(fmt(w0_sag))
+                    self.ui.label_w0_tan.setText(fmt(w0_tan))
+                    self.ui.label_z0_sag.setText(fmt(z0_sag))
+                    self.ui.label_z0_tan.setText(fmt(z0_tan))
+                except Exception:
+                    # Bei Mausbewegungen nicht nervig sein — Fehler ignorieren
+                    pass
                 self.ui.label_z_position.setText(f"{self.vc.convert_to_nearest_string(z_val, self)}")
                 self.ui.label_w_sag.setText(f"{self.vc.convert_to_nearest_string(w_sag_val, self)}")
                 self.ui.label_w_tan.setText(f"{self.vc.convert_to_nearest_string(w_tan_val, self)}")

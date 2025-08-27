@@ -43,6 +43,16 @@ class Beam():
         float: Beam radius.
         """
         return np.sqrt(-wavelength / (np.pi * n * np.imag(1/q)))
+    
+    @staticmethod
+    def get_w0_and_focus(q_final, z_out, wavelength, n):
+        n = 1.0
+        zR = np.imag(q_final)
+        if zR <= 0:
+            return float('inf'), float('nan')
+        w0 = np.sqrt(wavelength * zR / (np.pi * n))
+        focus_position = z_out - np.real(q_final)
+        return w0, focus_position
 
     def rayleigh_length(self, wavelength, beam_radius, n=1):
         """
