@@ -260,9 +260,9 @@ def optimize_single_combination(combination_data):
                     bounds=bounds,
                     method='trf',
                     max_nfev=100,
-                    ftol=1e-12,
-                    xtol=1e-12,
-                    gtol=1e-12
+                    ftol=1e-15,
+                    xtol=1e-15,
+                    gtol=1e-15
                 )
                 
                 if result.success or result.cost < best_fitness:
