@@ -560,7 +560,8 @@ class Resonator(QObject):
                 if hasattr(self.ui_resonator, 'label_length2') and self.l2 is not None:
                     self.ui_resonator.label_length2.setText(f"{self.vc.convert_to_nearest_string(self.l2)}")
                 if hasattr(self.ui_resonator, 'label_length3') and self.l3 is not None:
-                    self.ui_resonator.label_length3.setText(f"{self.vc.convert_to_nearest_string(self.l1)}")
+                    # FIX: zeigte vorher faelschlich l1 an
+                    self.ui_resonator.label_length3.setText(f"{self.vc.convert_to_nearest_string(self.l3)}")
                 if hasattr(self.ui_resonator, 'label_theta') and self.theta is not None:
                     self.ui_resonator.label_theta.setText(f"{np.rad2deg(self.theta):.2f}°")
                 if hasattr(self.ui_resonator, 'label_mirror1'):

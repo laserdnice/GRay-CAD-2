@@ -691,10 +691,19 @@ class MainWindow(QMainWindow, PropertiesHandler):
                     
                 else:
                     f_actual = ((n_design-1)/(n-1)) * f_design
+                    # FIX: Der Kruemmungsradius ist eine GEOMETRIE-Eigenschaft der Linse
+                    # und haengt nicht von der Betriebswellenlaenge ab.
+                    # Duennlinsen-Gleichung bei Designwellenlaenge:
+                    #   plano-konvex: 1/f_design = (n_design-1)/r_in  -> r_in = (n_design-1)*f_design
+                    #   bikonvex   : 1/f_design = 2(n_design-1)/r_in -> r_in = 2(n_design-1)*f_design
+                    # Ausgedrueckt ueber f_actual (= f_design*(n_design-1)/(n-1)):
+                    #   r_in = (n-1)*f_actual  bzw.  2*(n-1)*f_actual
+                    # Die alte Formel ((n_design-1)^2/(n-1)*f_actual) war nur fuer
+                    # n == n_design korrekt.
                     if is_plane:
-                        r_in_calculated = ((n_design - 1)**2)/(n - 1) * f_actual
+                        r_in_calculated = (n - 1) * f_actual
                     else:
-                        r_in_calculated = 2*((n_design - 1)**2)/(n - 1) * f_actual
+                        r_in_calculated = 2 * (n - 1) * f_actual
                     
                     # Aktualisiere nur entsprechend is_round und mode
                     if mode == "sagittal":
@@ -829,6 +838,14 @@ class MainWindow(QMainWindow, PropertiesHandler):
                 if isinstance(field, QtWidgets.QLineEdit):
                     old_value = updated["properties"].get(key, "N/A")
                     new_value = self.vc.convert_to_float(field.text())
+                    # FIX: "Angle of incidence" wird im Panel in GRAD angezeigt
+                    # (siehe properties_handler: np.rad2deg beim Befuellen des Felds),
+                    # intern aber in RADIANT gespeichert und in den Spiegelmatrizen
+                    # via cos(theta) verwendet. Ohne Rueckkonvertierung wurde der
+                    # Gradwert als Radiant gespeichert (Faktor ~57.3!), sobald
+                    # irgendein Feld der Komponente editiert wurde.
+                    if key == "Angle of incidence" and new_value is not None:
+                        new_value = float(np.deg2rad(new_value))
                     updated["properties"][key] = new_value
                 elif isinstance(field, QtWidgets.QCheckBox):
                     old_value = updated["properties"].get(key, "N/A")
