@@ -386,6 +386,14 @@ class Resonator(QObject):
         """
         Startet GA-Optimierung (ersetzt PSO).
         """
+        # FIX: Pfad zur Spiegelauswahl IMMER frisch aus der Config lesen.
+        # Frueher wurde self.temp_file_path nur einmal beim Oeffnen des Fensters
+        # gesetzt; da das Resonator-Objekt im Mainwindow nur einmal erzeugt und
+        # danach wiederverwendet wird, blieb eine spaeter geaenderte Spiegelauswahl
+        # unbeachtet (der Matcher rechnete mit den alten Spiegeln weiter, bis das
+        # Programm neu gestartet wurde). config.get_temp_file_path() wird von der
+        # Spiegelauswahl (select_items.py) bei jeder neuen Auswahl aktualisiert.
+        self.temp_file_path = config.get_temp_file_path()
         if self.temp_file_path is None or not path.exists(self.temp_file_path):
             QMessageBox.critical(self.resonator_window, "Error",
                                  "No temporary file found. Please add components and save them.")
